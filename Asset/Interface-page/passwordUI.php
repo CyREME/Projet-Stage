@@ -6,19 +6,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
 
 <div class="container">
+
+  <h1>Générateur de mot de passe</h1>
   
   <div class="core-container">
     
     <div class="psw-container">
       <div class="psw-input">
-        <input type="text" id="pswInput" placeholder="Mot de passe">
+        <input type="text" id="pswInput">
       </div>
 
       <div class="psw-btn-generate">
-        <button id="pswGenerate"><i class="fa-duotone fa-solid fa-rotate"></i></button>
+        <button id="pswGenerate"><i class="fa-duotone fa-solid fa-rotate fa-2xl" style="--fa-primary-color: #a23fa0; --fa-secondary-color: #ff0088;"></i></button>
       </div>
 
-      <div class="pws-btn-copy">
+      <div class="psw-btn-copy">
         <button id="pswCopy">Copier</button>
       </div>
       

@@ -16,14 +16,57 @@
 
 /** Div contenant le mot de passe généré **/
 .psw-container{
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   background-color: #ffffff;
   border: solid 1px black;
   border-radius: 8px;
-  padding: 15;
-  gap: 20px;
-  justify-content: space-around;
+  padding: 20px 15px;
+  gap: 15px;
   align-items: center;
+  box-sizing: border-box;
+}
+
+.psw-input {
+  flex-grow: 1;
+}
+
+.psw-input input[type="text"]{
+  width: -webkit-fill-available;
+  border: none;
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #ff7a7a;
+  font-family: monospace;
+  background-color: #ffffff;
+}
+
+.psw-input input[type="text"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.psw-btn-generate button, .psw-btn-copy button {
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.psw-btn-generate button {
+  background-color: transparent;
+  border: none;
+  color: #863984;
+}
+
+.psw-btn-copy button{
+   background-color: #ff7a7a;
+  border: 1px solid #ff7a7a;
+  border-radius: 4px;
+  font-size: 1.2rem;
+}
+
+.psw-btn-copy button:hover {
+  background-color: #ffffff;
+  border: 1px solid#000000;
 }
 
 
