@@ -1,3 +1,13 @@
+/** Style des body **/
+body#pswGenBody {
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+}
+
+
 /** Div parrent pour centrer le contenu **/
 .container{
   display: flex;
@@ -8,9 +18,21 @@
 }
 
 
+h1 {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
 /** Div contenant le module de génération **/
 .core-container{
   width: 832px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  box-sizing: border-box;f9fbfd
 }
 
 
@@ -18,13 +40,16 @@
 .psw-container{
   display: flex;
   width: 100%;
-  background-color: #ffffff;
-  border: solid 1px black;
-  border-radius: 8px;
-  padding: 20px 15px;
-  gap: 15px;
-  align-items: center;
-  box-sizing: border-box;
+  background-color: #f9fbfd;
+  border: solid 1px #e1e8ed;
+  border-radius: 12px;
+  padding: 10px 0;
+  margin-bottom: 30px;
+  transition: border-color 0.3s ease;
+}
+
+.psw-container:hover {
+  border-color: #cbd5e0;
 }
 
 .psw-input {
@@ -32,101 +57,208 @@
 }
 
 .psw-input input[type="text"]{
-  width: -webkit-fill-available;
+  width: 100%;
   border: none;
-  font-size: 2.2rem;
-  font-weight: bold;
-  color: #ff7a7a;
-  font-family: monospace;
-  background-color: #ffffff;
+  background: transparent;
+  font-size: 1.8rem;
+  font-weight: 'Roboto Mono', monospace;
+  font-weight: 500;
+  color: #4a5568;
+  letter-spacing: 1px;
 }
 
 .psw-input input[type="text"]:focus {
   outline: none;
-  box-shadow: none;
+}
+
+.psw-btn-generate, .psw-btn-copy {
+  display: flex;
+  align-items: center;
+}
+
+.psw-btn-copy {
+  padding: 0 10px;
 }
 
 .psw-btn-generate button, .psw-btn-copy button {
   cursor: pointer;
-  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  transition : transform 0.2 ease, opacity 0.2s;
 }
 
 .psw-btn-generate button {
-  background-color: transparent;
-  border: none;
-  color: #863984;
+  color: #8e44ad;
+  padding: 10px;
 }
 
+
 .psw-btn-copy button{
-   background-color: #ff7a7a;
-  border: 1px solid #ff7a7a;
-  border-radius: 4px;
-  font-size: 1.2rem;
+  background-color: #ffffff;
+  border: 1px solid #e1e8ed;
+  color: #4a5568;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .psw-btn-copy button:hover {
-  background-color: #ffffff;
-  border: 1px solid#000000;
+  background-color: #8e44ad;
+  color: #fff;
+  border: 1px solid #8e44ad;
 }
 
 
 
 /** Div contenant un slider pour indiqué la robustesse du mot de passe généré **/
 .check-container{
-  background-color: #a57e7e
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px; 
+}
+
+.check-bar-bg {
+  background-color: #edf2f7;
+  height: 8px;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.check-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition : width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
+}
+
+.dot-checker {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background-color: #cbd5e0;
+  display: block;
+  transition: background-color 0.3s, box-shadow 0.3s
+}
+
+.dot-faible, .bar-faible {
+  background-color: #fc8181;
+  box-shadow: 0 0 8px #fc8181;
 }
 
 
+.dot-moyen, .bar-moyen {
+  background-color: #f6ad55;
+  box-shadow: 0 0 8px #f6ad55;
+}
 
+
+.dot-fort, .bar-fort {
+  background-color: #68d391;
+  box-shadow: 0 0 8px #68d391;
+}
 
 
 
 
 /** Options du mot de passe **/
 .options-container{
-  background-color: #ff7a7a;
-  width: fit-content;
-  padding: 15;
-  margin: auto;
+  background-color: transparent;
+  width: 100%;
+  padding: 0;
 }
 
-.slider-container{
-  display: inline-flex;
-  gap: 10vh;
+.slider-container, .checkbox-container {
+  display: flex;
   align-items: center;
-  width: -webkit-fill-available;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 25px;
 }
 
-.slider-value {
-  width: fit-content;
-}
-
-.slider-value p {
-  width: max-content;
+.slider-value, .checkbox-label {
+  width: 180px;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #718096;
 }
 
 .slider-length {
-  width: 100%;
+  flex-grow: 1;
 }
 
 .slider-length input[type="range"]{
-  width: 100%
+  width: 100%;
+  webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 6px;
+  border-radius: 3px;
 }
 
-.checkbox-container {
-  display: inline-flex;
-  justify-content: center;
-  gap: 4vh;
-  align-items: center;
+.slider-length input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #8e44ad;
+  margin-top: -7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform 0.1s;
+  
+}
+
+.slider-length input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+.slider-length input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 3px;
 }
 
 .list-checkbox{
   display: flex;
+  flex-grow: 1;
+  gap: 20px;
 }
 
-.list-checkbox .psw-checkbox{
+.psw-checkbox {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 10px 0px;
+  cursor: pointer;
+}
+
+.psw-checkbox label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin-left: 8px;
+  user-select: none;
+}
+
+.psw-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border: 2px solid #cbd5e0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
+}
+
+.psw-checkbox input[type="checkbox"]:checked {
+  background-color: #8e44ad;
+  border-color: #8e44ad;
 }
