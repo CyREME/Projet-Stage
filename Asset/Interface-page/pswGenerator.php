@@ -1,4 +1,11 @@
 <?php
+
+/*
+  Titre : Générateur de mot de passe
+  Icon  : fa-solid fa-lock fa-2xl
+  Ordre : 1
+*/
+
 ?>
 
 <link rel="stylesheet" href="../../Asset/style.css">

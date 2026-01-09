@@ -1,3 +1,18 @@
+/**----- Page Index -----**/
+body#indexBody{
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  height: 100vh; 
+  overflow: hidden;
+}
+
+
+
+
+/**----- Module de génération de mot de passe -----**/
 /** Style des body **/
 body#pswGenBody {
   margin: 0;
@@ -261,4 +276,149 @@ h1 {
 .psw-checkbox input[type="checkbox"]:checked {
   background-color: #8e44ad;
   border-color: #8e44ad;
+}
+
+
+
+
+
+
+
+/**----- Barre de navigation -----**/
+.container-navbar{
+  width: 80px;
+  height: 80px;
+  background-color: #e0f2f1;
+  border-radius: 40px;
+  border: 1px solid #b2dfdb;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+
+  position: fixed;
+  top: 20px;
+  left: 20px;
+
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+
+  transition: 
+    width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+    height 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+    border-radius 0.4s ease;
+
+}
+
+.container-navbar:hover {
+  width: fit-content;
+  height: calc(100% - 40px);
+  border-radius: 20px;
+
+  transition:
+    border-radius 0.5s ease 0s,
+    height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.container-navbar:hover .nav-handle {
+  opacity: 0;
+  transition: opacity 0.2s ease 0s
+  pointer-events: none;
+  z-index: -1;
+}
+
+.nav-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 1.8rem;
+  color: #00695c;
+  z-index: 2;
+
+  transition: opacity 0.1s ease 0.1s;
+  opacity: 1;
+}
+
+.nav-handle i {
+}
+
+
+
+
+
+
+
+
+
+.nav-content {
+  margin: 10px;
+
+  display: flex;
+  flex-direction: column;
+
+
+  opacity: 0;
+  visibility: hidden;
+  
+  translate: 
+    opacity 0.1s ease 0s, 
+    visibility 0s 0.1s;
+}
+
+.container-navbar:hover .nav-content {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s ease 0.2s;
+}
+
+.module-icon {
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 20px;
+
+  transition: all 0.3s ease;
+}
+
+.module-icon:hover,
+.module-icon.active {
+  background-color: #00695c;
+  color: #ffffff;
+}
+
+.module-icon a {
+  text-decoration: none;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.module-icon a i {
+  width: 60px;
+  height: 60px;
+  
+  color: #00695c;
+  font-size: 2.6rem;
+  transition: all 0.3s ease;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.module-icon:hover a i,
+.module-icon.active a i{
+  color: #ffffff;
 }
