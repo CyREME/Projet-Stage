@@ -3,14 +3,11 @@
 /*
   Titre : Générateur de mot de passe
   Icon  : fa-solid fa-lock fa-2xl
+  Colors: #37000b, #ffcdd2, #c62828
   Ordre : 1
 */
 
 ?>
-
-<link rel="stylesheet" href="../../Asset/style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
 
 <body id="pswGenBody">
   
