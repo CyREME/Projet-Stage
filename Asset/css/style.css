@@ -1,424 +1,432 @@
-/**----- Page Index -----**/
-body#indexBody{
-  margin: 0;
-  padding: 0;
-  background-color: #ffffff;
-  font-family: 'Poppins', sans-serif;
-  display: flex;
-  height: 100vh; 
-  overflow: hidden;
+/**
+ * FEUILLE DE STYLE PRINCIPALE
+ * Chemin : Asset/css/style.css
+ */
+
+/* =========================================
+   1. GLOBAL & PAGE INDEX
+   ========================================= */
+body#indexBody {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 
-
-
-
-/**----- Module de génération de mot de passe -----**/
-/** Style des body **/
+/* =========================================
+   2. MODULE GÉNÉRATEUR DE MOT DE PASSE
+   ========================================= */
 body#pswGenBody {
-  margin: 0;
-  padding: 0;
-  background-color: #f4f7f6;
-  font-family: 'Poppins', sans-serif;
-  color: #333;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
 }
 
-
-/** Div parrent pour centrer le contenu **/
-.container{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
 }
-
 
 h1 {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 2rem;
-  letter-spacing: -0.5px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    letter-spacing: -0.5px;
 }
 
-/** Div contenant le module de génération **/
-.core-container{
-  width: 832px;
-  background-color: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  padding: 40px;
-  box-sizing: border-box;f9fbfd
+.core-container {
+    width: 832px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+    padding: 40px;
+    /* Correction de la coquille ici */
+    box-sizing: border-box; 
 }
 
-
-/** Div contenant le mot de passe généré **/
-.psw-container{
-  display: flex;
-  width: 100%;
-  background-color: #f9fbfd;
-  border: solid 1px #e1e8ed;
-  border-radius: 12px;
-  padding: 10px 0;
-  margin-bottom: 30px;
-  transition: border-color 0.3s ease;
+.psw-container {
+    display: flex;
+    width: 100%;
+    background-color: #f9fbfd;
+    border: solid 1px #e1e8ed;
+    border-radius: 12px;
+    padding: 10px 0;
+    margin-bottom: 30px;
+    transition: border-color 0.3s ease;
 }
 
 .psw-container:hover {
-  border-color: #cbd5e0;
+    border-color: #cbd5e0;
 }
 
 .psw-input {
-  flex-grow: 1;
+    flex-grow: 1;
 }
 
-.psw-input input[type="text"]{
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 1.8rem;
-  font-weight: 'Roboto Mono', monospace;
-  font-weight: 500;
-  color: #4a5568;
-  letter-spacing: 1px;
+.psw-input input[type="text"] {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1.8rem;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    color: #4a5568;
+    letter-spacing: 1px;
 }
 
 .psw-input input[type="text"]:focus {
-  outline: none;
+    outline: none;
 }
 
 .psw-btn-generate, .psw-btn-copy {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .psw-btn-copy {
-  padding: 0 10px;
+    padding: 0 10px;
 }
 
 .psw-btn-generate button, .psw-btn-copy button {
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  transition : transform 0.2 ease, opacity 0.2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: transform 0.2s ease, opacity 0.2s;
 }
 
 .psw-btn-generate button {
-  color: #8e44ad;
-  padding: 10px;
+    color: #8e44ad;
+    padding: 10px;
 }
 
-
-.psw-btn-copy button{
-  background-color: #ffffff;
-  border: 1px solid #e1e8ed;
-  color: #4a5568;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+.psw-btn-copy button {
+    background-color: #ffffff;
+    border: 1px solid #e1e8ed;
+    color: #4a5568;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .psw-btn-copy button:hover {
-  background-color: #8e44ad;
-  color: #fff;
-  border: 1px solid #8e44ad;
+    background-color: #8e44ad;
+    color: #fff;
+    border: 1px solid #8e44ad;
 }
 
-
-
-/** Div contenant un slider pour indiqué la robustesse du mot de passe généré **/
-.check-container{
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 40px; 
+/* =========================================
+   3. INDICATEUR DE ROBUSTESSE
+   ========================================= */
+.check-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 40px;
 }
 
 .check-bar-bg {
-  background-color: #edf2f7;
-  height: 8px;
-  width: 100%;
-  border-radius: 4px;
-  overflow: hidden;
+    background-color: #edf2f7;
+    height: 8px;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .check-bar-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: 4px;
-  transition : width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
 }
 
 .dot-checker {
-  height: 12px;
-  width: 12px;
-  border-radius: 50%;
-  background-color: #cbd5e0;
-  display: block;
-  transition: background-color 0.3s, box-shadow 0.3s
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background-color: #cbd5e0;
+    display: block;
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 .dot-faible, .bar-faible {
-  background-color: #fc8181;
-  box-shadow: 0 0 8px #fc8181;
+    background-color: #fc8181;
+    box-shadow: 0 0 8px #fc8181;
 }
-
 
 .dot-moyen, .bar-moyen {
-  background-color: #f6ad55;
-  box-shadow: 0 0 8px #f6ad55;
+    background-color: #f6ad55;
+    box-shadow: 0 0 8px #f6ad55;
 }
-
 
 .dot-fort, .bar-fort {
-  background-color: #68d391;
-  box-shadow: 0 0 8px #68d391;
+    background-color: #68d391;
+    box-shadow: 0 0 8px #68d391;
 }
 
-
-
-
-/** Options du mot de passe **/
-.options-container{
-  background-color: transparent;
-  width: 100%;
-  padding: 0;
+/* =========================================
+   4. OPTIONS & SLIDERS
+   ========================================= */
+.options-container {
+    background-color: transparent;
+    width: 100%;
+    padding: 0;
 }
 
 .slider-container, .checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  width: 100%;
-  margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 25px;
 }
 
 .slider-value, .checkbox-label {
-  width: 180px;
-  flex-shrink: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #718096;
+    width: 180px;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #718096;
 }
 
 .slider-length {
-  flex-grow: 1;
+    flex-grow: 1;
 }
 
-.slider-length input[type="range"]{
-  width: 100%;
-  webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-  height: 6px;
-  border-radius: 3px;
+.slider-length input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #edf2f7;
+    background: transparent;
+    cursor: pointer;
+    height: 6px;
+    border-radius: 3px;
 }
 
 .slider-length input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid #8e44ad;
-  margin-top: -7px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: transform 0.1s;
-  
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #8e44ad;
+    margin-top: -7px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s;
 }
 
 .slider-length input[type="range"]:active::-webkit-slider-thumb {
-  transform: scale(1.1);
+    transform: scale(1.1);
 }
 
 .slider-length input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  background: transparent;
-  border-radius: 3px;
+    height: 6px;
+    background: transparent;
+    border-radius: 3px;
 }
 
-.list-checkbox{
-  display: flex;
-  flex-grow: 1;
-  gap: 20px;
+.list-checkbox {
+    display: flex;
+    flex-grow: 1;
+    gap: 20px;
 }
 
 .psw-checkbox {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
 .psw-checkbox label {
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #4a5568;
-  margin-left: 8px;
-  user-select: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-left: 8px;
+    user-select: none;
 }
 
 .psw-checkbox input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  background-color: #fff;
-  border: 2px solid #cbd5e0;
-  border-radius: 6px;
-  cursor: pointer;
-  display: grid;
-  place-content: center;
-  transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border: 2px solid #cbd5e0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
 }
 
 .psw-checkbox input[type="checkbox"]:checked {
-  background-color: #8e44ad;
-  border-color: #8e44ad;
+    background-color: #8e44ad;
+    border-color: #8e44ad;
+}
+
+
+
+/* =========================================
+ 5. PAGE DE TEST DE MOT DE PASSE
+ ========================================= */
+
+#pswCrackTime {
+    font-size: 1.1rem;
+    color: #718096;
+    font-style: italic
 }
 
 
 
 
+/* =========================================
+   6. BARRE DE NAVIGATION (NAVBAR)
+   ========================================= */
 
+.container-navbar {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 
+    position: fixed;
+    top: 20px;
+    left: 20px;
 
-/**----- Barre de navigation -----**/
-.container-navbar{
-  width: 80px;
-  height: 80px;
-  background-color: #e0f2f1;
-  border-radius: 40px;
-  border: 1px solid #b2dfdb;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
-  position: fixed;
-  top: 20px;
-  left: 20px;
+    /* Transitions structurelles */
+    transition: 
+        width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+        height 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+        border-radius 0.4s ease;
+}
 
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-
-  transition: 
-    width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-    height 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-    border-radius 0.4s ease;
-
+/* Gestion des couleurs par ID (Prioritaire) */
+#mainNavbar {
+    background-color: #37000b; /* Rouge par défaut */
+    transition: background-color 0.4s ease-in-out !important;
 }
 
 .container-navbar:hover {
-  width: fit-content;
-  height: calc(100% - 40px);
-  border-radius: 20px;
+    width: fit-content;
+    height: calc(100% - 40px);
+    border-radius: 20px;
 
-  transition:
-    border-radius 0.5s ease 0s,
-    height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
-    width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    transition:
+        border-radius 0.5s ease 0s,
+        height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+        width 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+        background-color 0.4s ease-in-out !important; 
 }
 
+/* Gestion du Handle (Hamburger) */
 .container-navbar:hover .nav-handle {
-  opacity: 0;
-  transition: opacity 0.2s ease 0s
-  pointer-events: none;
-  z-index: -1;
+    opacity: 0;
+    transition: opacity 0.2s ease 0s;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .nav-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 80px;
-  height: 80px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-  font-size: 1.8rem;
-  color: #00695c;
-  z-index: 2;
+    font-size: 1.8rem;
+    z-index: 2;
 
-  transition: opacity 0.1s ease 0.1s;
-  opacity: 1;
+    transition: opacity 0.1s ease 0.1s;
+    opacity: 1;
 }
 
-.nav-handle i {
+/* Styles spécifiques ID pour les couleurs */
+#navHandle {
+    background-color: #37000b; /* Même couleur que le menu */
+    transition: background-color 0.4s ease-in-out, border-color 0.4s ease !important;
+    cursor: pointer;
 }
 
+#navHandle i {
+    color: #ffcdd2; /* Couleur accentuation claire */
+    transition: color 0.4s ease-in-out !important;
+}
 
-
-
-
-
-
-
-
+/* Contenu */
 .nav-content {
-  margin: 10px;
-
-  display: flex;
-  flex-direction: column;
-
-
-  opacity: 0;
-  visibility: hidden;
-  
-  translate: 
-    opacity 0.1s ease 0s, 
-    visibility 0s 0.1s;
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.1s ease 0s, visibility 0s 0.1s;
 }
 
 .container-navbar:hover .nav-content {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.4s ease 0.2s;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease 0.2s;
 }
 
+/* Module Icones */
 .module-icon {
-  background-color: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
-  margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #bdc3c7;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
 
-  transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 20px;
+    cursor: pointer;
+
+    transition: background-color 0.4s ease-in-out, transform 0.2s ease !important;
 }
 
-.module-icon:hover,
-.module-icon.active {
-  background-color: #00695c;
-  color: #ffffff;
+.module-icon i {
+    width: 60px;
+    height: 60px;
+    font-size: 2.6rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: color 0.4s ease-in-out !important;
 }
 
 .module-icon a {
-  text-decoration: none;
-  display: flex;
-  width: 100%;
-  justify-content: center;
+    text-decoration: none;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    color: inherit;
 }
 
-.module-icon a i {
-  width: 60px;
-  height: 60px;
-  
-  color: #00695c;
-  font-size: 2.6rem;
-  transition: all 0.3s ease;
-  
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.module-icon.active {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transform: scale(1.02);
 }
 
-.module-icon:hover a i,
-.module-icon.active a i{
-  color: #ffffff;
+.module-icon:hover {
+    transform: translateY(-2px);
 }

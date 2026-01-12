@@ -4,147 +4,248 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialisation du module de génération de mot de passe
-    if(document.body.id === 'pswGenBody') {
+    // 1. Barre de navigation (partout)
+    initNavBar();
+
+    // 2. Détection de la page active via l'ID du body
+    const bodyId = document.body.id;
+
+    if (bodyId === 'pswGenBody') {
         initPasswordGenerator();
+    } else if (bodyId === 'pswTestBody') {
+        initPasswordTester();
     }
 });
 
-// --- MODULE GÉNÉRATEUR DE MOT DE PASSE ---
+// =========================================================================
+// MODULE 1 : BARRE DE NAVIGATION
+// =========================================================================
+function initNavBar() {
+    const navbar = document.getElementById('mainNavbar');
+    const navHandle = document.getElementById('navHandle');
+    const navHandleIcon = navHandle ? navHandle.querySelector('i') : null;
+    const icons = document.querySelectorAll('.module-icon');
+
+    // État par défaut
+    let defaultState = { bgMenu: '#2c3e50', bgBox: '#ffffff', colorIcon: '#333' };
+
+    function applyState(targetElement, bgMenu, bgBox, colorIcon) {
+        if (navbar) navbar.style.backgroundColor = bgMenu;
+        if (navHandle) navHandle.style.backgroundColor = bgMenu;
+        if (navHandleIcon) navHandleIcon.style.color = bgBox;
+
+        icons.forEach(el => {
+            if (el !== targetElement && el.getAttribute('data-active') !== 'true') {
+                el.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                el.querySelector('i').style.color = '#bdc3c7';
+            }
+        });
+
+        if (targetElement) {
+            targetElement.style.backgroundColor = bgBox;
+            targetElement.querySelector('i').style.color = colorIcon;
+        }
+    }
+
+    const activeEl = document.querySelector('.module-icon[data-active="true"]');
+    if (activeEl) {
+        defaultState.bgMenu = activeEl.getAttribute('data-bg-menu');
+        defaultState.bgBox = activeEl.getAttribute('data-bg-box');
+        defaultState.colorIcon = activeEl.getAttribute('data-color-icon');
+        applyState(activeEl, defaultState.bgMenu, defaultState.bgBox, defaultState.colorIcon);
+    }
+
+    icons.forEach(icon => {
+        icon.addEventListener('mouseenter', () => {
+            applyState(icon, icon.getAttribute('data-bg-menu'), icon.getAttribute('data-bg-box'), icon.getAttribute('data-color-icon'));
+        });
+        icon.addEventListener('mouseleave', () => {
+            applyState(activeEl, defaultState.bgMenu, defaultState.bgBox, defaultState.colorIcon);
+        });
+    });
+}
+
+// =========================================================================
+// FONCTIONS UTILITAIRES PARTAGÉES (Zxcvbn & Temps)
+// =========================================================================
+function convertSecondsToFrench(seconds) {
+        if (seconds < 1) return "Moins d'une seconde";
+        
+        if (seconds < 60) return Math.round(seconds) + " secondes";
+        
+        let minutes = seconds / 60;
+        if (minutes < 60) return Math.round(minutes) + " minute(s)";
+        
+        let hours = minutes / 60;
+        if (hours < 24) return Math.round(hours) + " heure(s)";
+        
+        let days = hours / 24;
+        if (days < 30) return Math.round(days) + " jour(s)";
+        
+        // --- LE BLOC MANQUANT (MOIS) ---
+        let months = days / 30;
+        if (months < 12) return Math.round(months) + " mois";
+        
+        let years = days / 365;
+        if (years >= 100) return "Plus d'un siècle";
+        
+        return Math.round(years) + " an(s)";
+}
+
+function updateUiStrength(password, crackTimeDisplayId = null) {
+    const bar = document.getElementById("pswStrength");
+    const dot = document.querySelector(".dot-checker");
+    const timeDisplay = crackTimeDisplayId ? document.getElementById(crackTimeDisplayId) : null;
+
+    if (!password) {
+        if (bar) bar.style.width = "0%";
+        if (dot) dot.className = "dot-checker"; 
+        if (timeDisplay) timeDisplay.textContent = "";
+        return;
+    }
+
+    // Si zxcvbn n'est pas encore chargé, on sort sans rien casser
+    if (typeof zxcvbn === 'undefined') return;
+
+    let result = zxcvbn(password);
+    let score = result.score;
+
+    let colorClass = "dot-faible"; 
+    if (score >= 4) colorClass = "dot-fort";
+    else if (score >= 2) colorClass = "dot-moyen";
+
+    if (dot) dot.className = "dot-checker " + colorClass;
+    if (bar) {
+        bar.className = "check-bar-fill " + colorClass.replace('dot-', 'bar-');
+        let width = Math.min((result.guesses_log10 / 14) * 100, 100);
+        bar.style.width = width + "%";
+    }
+
+    if (timeDisplay && result.crack_times_seconds) {
+        let seconds = result.crack_times_seconds.offline_slow_hashing_1e4_per_second;
+        timeDisplay.innerHTML = "Temps estimé : <strong>" + convertSecondsToFrench(seconds) + "</strong>";
+    }
+}
+
+
+// =========================================================================
+// MODULE 2 : LE GÉNÉRATEUR (Page pswGenerator.php)
+// =========================================================================
 function initPasswordGenerator() {
     const pswInput = document.getElementById("pswInput");
     const pswGenerate = document.getElementById("pswGenerate");
     const pswLength = document.getElementById("pswLength");
     const pswCopy = document.getElementById("pswCopy");
 
-    // Checkbox elements
-    const pswHasMaj = document.getElementById("pswUppercase");
-    const pswHasMin = document.getElementById("pswLowercase");
-    const pswHasNum = document.getElementById("pswNumbers");
-    const pswHasSymb = document.getElementById("pswSymbols");
+    const checkboxes = {
+        maj: document.getElementById("pswUppercase"),
+        min: document.getElementById("pswLowercase"),
+        num: document.getElementById("pswNumbers"),
+        sym: document.getElementById("pswSymbols")
+    };
 
-    // Event Listeners
-    pswGenerate.addEventListener("click", refreshPsw);
-
-    pswLength.addEventListener("input", function(){
-        progressBarLength();
-        refreshPsw();
-    });
-
-    pswHasMaj.addEventListener("change", refreshPsw);
-    pswHasMin.addEventListener("change", refreshPsw);
-    pswHasNum.addEventListener("change", refreshPsw);
-    pswHasSymb.addEventListener("change", refreshPsw);
-
-    pswCopy.addEventListener("click", copyPsw);
-
-    // Fonctions internes au module
-    function copyPsw() {
-        navigator.clipboard.writeText(pswInput.value);
-
-        // Petit effet visuel optionnel pour confirmer la copie
-        const originalText = pswCopy.innerText;
-        pswCopy.innerText = "Copié !";
-        setTimeout(() => {
-            pswCopy.innerText = originalText;
-        }, 2000);
-    }
-
-    function refreshPsw(){
+    function refreshPsw() {
+        if (!pswInput) return;
         let charset = "";
-
-        const majuscule = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const minuscule = "abcdefghijklmnopqrstuvwxyz";
-        const chiffre = "0123456789";
-        const symbole = "!@#$%*-_+=?";
-
-        if (pswHasMaj.checked) charset += majuscule;
-        if (pswHasMin.checked) charset += minuscule;
-        if (pswHasNum.checked) charset += chiffre;
-        if (pswHasSymb.checked) charset += symbole;
-
-        // Sécurité : si rien n'est coché, on force les minuscules
-        if (charset === ""){
-            charset = minuscule;
-            pswHasMin.checked = true;
+        const chars = {
+            maj: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", min: "abcdefghijklmnopqrstuvwxyz",
+            num: "0123456789", sym: "!@#$%*-_+=?"
         };
 
+        if (checkboxes.maj?.checked) charset += chars.maj;
+        if (checkboxes.min?.checked) charset += chars.min;
+        if (checkboxes.num?.checked) charset += chars.num;
+        if (checkboxes.sym?.checked) charset += chars.sym;
+
+        if (charset === "") { charset = chars.min; if (checkboxes.min) checkboxes.min.checked = true; }
+
         let password = "";
-        let passwordLength = pswLength.value;
+        let length = pswLength ? pswLength.value : 12;
+        const lengthDisplay = document.getElementById("pswLengthValue");
+        if (lengthDisplay) lengthDisplay.textContent = length;
 
-        document.getElementById("pswLengthValue").textContent = passwordLength;
-
-        for (let i = 0; i < passwordLength; i++){
-            let randomIndex = Math.floor(Math.random() * charset.length);
-            password += charset[randomIndex];
+        for (let i = 0; i < length; i++) {
+            password += charset[Math.floor(Math.random() * charset.length)];
         }
 
         pswInput.value = password;
-
-        // Vérification de la force du mot de passe
-        // Note: Assure-toi que la librairie zxcvbn est bien chargée dans ton PHP
-        if(typeof zxcvbn !== 'undefined') {
-            pswChecker();
-        } else {
-            console.warn("La librairie zxcvbn n'est pas chargée.");
-        }
+        updateUiStrength(password);
     }
 
-    function progressBar(score, taille){
-        let bar = document.getElementById("pswStrength");
-        // Ajustement de la largeur max pour éviter le dépassement
-        let barWidth = Math.min((taille / 13) * 100, 100); 
-        bar.style.width = barWidth + "%";
-
-        // Nettoyage des classes
-        bar.classList.remove("bar-faible", "bar-moyen", "bar-fort");
-
-        if (score === 0 || score === 1){
-            bar.classList.add("bar-faible");
-        } else if (score === 2 || score === 3) {
-            bar.classList.add("bar-moyen");
-        } else if (score === 4) {
-            bar.classList.add("bar-fort");
-        }
+    function updateSliderColor() {
+        if (!pswLength) return;
+        let val = ((pswLength.value - pswLength.min) / (pswLength.max - pswLength.min)) * 100;
+        pswLength.style.background = `linear-gradient(to right, #8e44ad ${val}%, #edf2f7 ${val}%)`;
     }
 
-    function dotColorChange(score){
-        let dot = document.querySelector(".dot-checker");
+    if (pswGenerate) pswGenerate.addEventListener("click", refreshPsw);
+    if (pswLength) pswLength.addEventListener("input", () => { updateSliderColor(); refreshPsw(); });
+    Object.values(checkboxes).forEach(box => box?.addEventListener("change", refreshPsw));
 
-        // Nettoyage des classes
-        dot.classList.remove("dot-faible", "dot-moyen", "dot-fort");
-
-        if (score === 0 || score === 1){
-            dot.classList.add("dot-faible");
-        } else if (score === 2 || score === 3) {
-            dot.classList.add("dot-moyen");
-        } else if (score === 4) {
-            dot.classList.add("dot-fort");
-        }
+    if (pswCopy) {
+        pswCopy.addEventListener("click", () => {
+            navigator.clipboard.writeText(pswInput.value);
+            let original = pswCopy.innerText;
+            pswCopy.innerText = "Copié !";
+            setTimeout(() => pswCopy.innerText = original, 2000);
+        });
     }
 
-    function pswChecker(){
-        let password = pswInput.value;
-        // Appel à la librairie externe zxcvbn
-        let result = zxcvbn(password);
-
-        dotColorChange(result.score);
-        progressBar(result.score, result.guesses_log10);
-    }
-
-    function progressBarLength(){
-        let bar = document.getElementById("pswLength");
-
-        let value = bar.value;
-        let min = bar.min;
-        let max = bar.max;
-
-        let percentage = ((value - min) / (max - min)) * 100;
-
-        bar.style.background = `linear-gradient(to right, #8e44ad ${percentage}%, #edf2f7 ${percentage}%)`;
-    }
-
-    // Lancement au chargement
-    progressBarLength();
+    updateSliderColor();
     refreshPsw();
+}
+
+
+// =========================================================================
+// MODULE 3 : LE TESTEUR (Page pswTester.php)
+// =========================================================================
+function initPasswordTester() {
+    const pswInput = document.getElementById("pswInput");
+    const pswPaste = document.getElementById("pswPaste");
+
+    function check() {
+        if(pswInput) updateUiStrength(pswInput.value, "pswCrackTime");
+    }
+
+    if (pswInput) pswInput.addEventListener("input", check);
+
+    if (pswPaste) {
+        pswPaste.addEventListener("click", async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                pswInput.value = text;
+                check();
+            } catch (err) {
+                alert("Erreur presse-papier : " + err);
+            }
+        });
+    }
+
+    // --- CORRECTION MAJEURE ICI : ATTENTE DE LA LIBRAIRIE ---
+    setTimeout(async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text && pswInput) {
+                pswInput.value = text;
+                console.log("Texte collé, attente de zxcvbn...");
+
+                // On vérifie toutes les 100ms si zxcvbn est chargé
+                let attempts = 0;
+                let waiter = setInterval(() => {
+                    attempts++;
+                    if(typeof zxcvbn !== 'undefined') {
+                        // Librairie chargée ! On lance le check
+                        clearInterval(waiter);
+                        check();
+                        console.log("Analyse lancée !");
+                    } else if (attempts > 50) {
+                        // Après 5 secondes, on abandonne pour ne pas tourner en rond
+                        clearInterval(waiter);
+                    }
+                }, 100);
+            }
+        } catch (err) {
+            console.log("Pas de collage auto (navigateur bloqué).");
+        }
+    }, 100);
 }

@@ -1,53 +1,3 @@
-<style>
-    /* --- 1. LE CONTENEUR PRINCIPAL (Barre complète) --- */
-    #mainNavbar {
-        transition: background-color 0.4s ease-in-out !important;
-        /* CORRECTION ICI : On met la couleur rouge par défaut directement */
-        background-color: #37000b; 
-    }
-
-    /* --- 2. LES BOUTONS (Carrés des outils) --- */
-    .module-icon {
-        transition: background-color 0.4s ease-in-out, transform 0.2s ease !important;
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #bdc3c7;
-        cursor: pointer;
-    }
-
-    /* --- 3. LES ICONES (Symboles FontAwesome) --- */
-    .module-icon i {
-        transition: color 0.4s ease-in-out !important;
-    }
-
-    /* --- 4. LE BOUTON HAMBURGER (Menu mobile) --- */
-    #navHandle {
-        transition: background-color 0.4s ease-in-out, border-color 0.4s ease !important;
-        /* CORRECTION ICI : Fond rouge par défaut */
-        background-color: #37000b; 
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* --- 5. L'ICONE DU HAMBURGER --- */
-    #navHandle i {
-        transition: color 0.4s ease-in-out !important;
-        /* Optionnel : couleur par défaut de l'icone hamburger */
-        color: #ffcdd2; 
-    }
-
-    /* --- EFFETS AU SURVOL --- */
-    .module-icon.active {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transform: scale(1.02);
-    }
-
-    .module-icon:hover {
-        transform: translateY(-2px);
-    }
-</style>
-
 <div class="container-navbar" id="mainNavbar">
 
   <div class="nav-handle" id="navHandle">
@@ -58,6 +8,7 @@
     <?php
     $modules = []; 
 
+    // On scanne le dossier Interface-page comme configuré dans votre index
     foreach (glob("Asset/Outils/*.php") as $filename) {
       $file = fopen($filename, "r");
 
@@ -65,25 +16,26 @@
         $title = 'Sans titre'; 
         $icon = 'fa-solid fa-question';
 
-        // --- CORRECTION PHP : DÉFAUTS MIS À JOUR ---
-        // Si un fichier n'a pas de config, il prendra ces couleurs
-        $bgMenu = '#37000b'; 
-        $bgBox = '#ffcdd2';
-        $iconColor = '#c62828';
+        // --- COULEURS PAR DÉFAUT ---
+        $bgMenu = '#2c3e50'; 
+        $bgBox = 'rgba(255,255,255,0.1)';
+        $iconColor = '#ecf0f1';
         $ordre = 99; 
 
         $i = 0;
 
+        // Lecture des 20 premières lignes
         while (($line = fgets($file)) !== false && $i < 20) { 
           $line = trim($line);
           $lineLower = strtolower($line);
 
-          if (str_contains($lineLower, 'title') || str_contains($lineLower, 'titre')) {
+          if (str_contains($lineLower, 'titre') || str_contains($lineLower, 'title')) {
             if (str_contains($line, ':')) $title = trim(substr($line, strpos($line, ':') + 1));
           } 
           elseif (str_contains($lineLower, 'icon')) {
              if (str_contains($line, ':')) $icon = trim(substr($line, strpos($line, ':') + 1));
           }
+          // --- RECUPERATION DES COULEURS ---
           elseif (str_contains($lineLower, 'colors') || str_contains($lineLower, 'couleurs')) {
              if (str_contains($line, ':')) {
                $rawColors = trim(substr($line, strpos($line, ':') + 1));
@@ -117,12 +69,12 @@
       }      
     }
 
-    // Tri par ordre
+    // Tri
     usort($modules, function($a, $b) {
       return $a['ordre'] <=> $b['ordre'];
     });
 
-    // Définition de la page active
+    // Page active
     if (isset($_GET['page']) && !empty($_GET['page'])) {
         $currentPage = $_GET['page'];
     } else {
@@ -133,6 +85,7 @@
       $isActive = ($currentPage === $module['file']);
       $activeClass = $isActive ? 'active' : '';
 
+      // Injection des attributs data- pour le JS
       echo '<div class="module-icon ' . $activeClass . '" 
                  title="' . htmlspecialchars($module['title']) . '"
                  data-bg-menu="' . htmlspecialchars($module['bg_menu']) . '"
