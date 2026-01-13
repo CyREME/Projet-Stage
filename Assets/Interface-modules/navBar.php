@@ -9,7 +9,7 @@
     $modules = []; 
 
     // On scanne le dossier Interface-page comme configuré dans votre index
-    foreach (glob("Asset/Outils/*.php") as $filename) {
+    foreach (glob("Assets/Outils/*.php") as $filename) {
       $file = fopen($filename, "r");
 
       if ($file) {
