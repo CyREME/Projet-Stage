@@ -430,3 +430,57 @@ h1 {
 .module-icon:hover {
     transform: translateY(-2px);
 }
+
+
+
+
+/* =========================================
+   7. OUTIL ANUAIRE
+   ========================================= */
+
+#annuaryBody {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 150vh;
+    height: 20vh;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 20px
+}
+
+.annuaire {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+.contact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 150vh;
+    padding: 15px;
+    border: 1px solid black;
+    border-radius: 40px;
+}
+
+.contact-info {
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+}

@@ -7,88 +7,113 @@
   Ordre: 3
 */
 
-$results = null;
-$error = null;
+include_once __DIR__ . '/../Fonction/Fonctions.php';
 
-// On ne lance le traitement QUE si un formulaire a été soumis (POST)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['pdf_file'])) {
 
-    // 1. Vérification d'erreur d'upload
-    if ($_FILES['pdf_file']['error'] === UPLOAD_ERR_OK) {
+$pdo = connectDb();
 
-        $tempPath = $_FILES['pdf_file']['tmp_name'];
+$message = "";
+$rapport_python = "";
 
-        // 2. CORRECTION DU CHEMIN PYTHON
-        $pythonScriptPath = __DIR__ . '/../Python/parser.py';
+if (isset($_POST['import'])) {
 
-        // --- FIX : DÉFINITION DU CHEMIN DES LIBRAIRIES UTILISATEUR ---
-        // Sur Replit, pip install --user met les fichiers ici :
-        $libPath = "/home/runner/.local/lib/python3.10/site-packages";
+  echo "Fichier importé avec succès.";
+  
+  $templacement_temporaire = $_FILES['csv_file']['tmp_name'];
 
-        // 3. Construction de la commande AVEC LE PYTHONPATH
-        // On injecte la variable d'environnement PYTHONPATH juste avant la commande
-        $command = "PYTHONPATH=" . $libPath . " python3 " . escapeshellarg($pythonScriptPath) . " " . escapeshellarg($tempPath) . " 2>&1";
+  $dossier_temp = __DIR__ . '/../Temp/';
+  $destination = $dossier_temp . 'import.xlsx';
 
-        // 4. Exécution
-        $output = shell_exec($command);
+  if (!is_dir($dossier_temp)) {
+    mkdir($dossier_temp, 0777, true);
+  }
+    
+  if (move_uploaded_file($templacement_temporaire, $destination)) {
+    $script_path = __DIR__ . '/../Python/fonctions.py';
+    $commande = "python3 " . escapeshellarg($script_path) . " extractData 2>&1";
+    $output = shell_exec($commande);
+    $rapport_python = $output;
 
-        // 5. Décodage
-        $data = json_decode($output, true);
+   echo "<h3>Rapport du script Python :</h3>";
+    echo "<pre>" . $output . "</pre>";
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            // Si le JSON est invalide, c'est souvent que Python a crashé et renvoyé du texte brut
-            $error = "Erreur brute Python : " . htmlspecialchars($output);
-        } elseif (isset($data['error'])) {
-            $error = "Erreur du script : " . htmlspecialchars($data['error']);
-        } else {
-            $results = $data;
-        }
-
-    } else {
-        $error = "Erreur lors de l'upload du fichier.";
-    }
+} else {
+    echo "Erreur d'upload.";
+  }
 }
+
+if (isset($_POST['delete_id'])) {
+  $stmt = $pdo->prepare("DELETE FROM Cotrans WHERE id = ?");
+  $stmt->execute([$_POST['delete_id']]);
+  $message = "L'entrée a été supprimée avec succès.";
+}
+
+$contacts = getData();
+  
 ?>
 
-<div class="core-container">
-    <h1>Extraction d'Annuaire (Python)</h1>
+<!-- HTML -->
 
-    <form action="" method="post" enctype="multipart/form-data" class="upload-box" style="text-align:center; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+<div id="annuaryBody">
+  <form action="" class="form-drop-zone" method="post" enctype="multipart/form-data">
+    <div class="drop-zone" id="dropZone">
+      <span class="drop-zone__prompt">Glissez votre fichier Excel ici ou cliquez pour upload</span>
+      <input type="file" name="csv_file" id="csv_file" class="drop-zone__input" accept=".xlsx">
+    </div>
+    <button type="submit" name="import">Importer</button>
+  </form>
 
-        <div style="margin-bottom: 20px;">
-            <label for="pdfInput" style="cursor: pointer; display: inline-block; padding: 20px; border: 2px dashed #b2dfdb; border-radius: 10px; width: 100%; box-sizing: border-box;">
-                <i class="fa-solid fa-cloud-arrow-up fa-3x" style="color: #00695c;"></i>
-                <br><br>
-                <span style="color: #555;">Cliquez pour choisir un PDF</span>
-            </label>
-            <input type="file" name="pdf_file" id="pdfInput" accept=".pdf" style="display: none;" onchange="document.querySelector('span').innerText = this.files[0].name">
-        </div>
+  <?php if($message): ?>
+    <div class="alert"><?php echo $message; ?></div>
+  <?php endif; ?>
 
-        <button type="submit" style="background-color: #00695c; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem;">
-            <i class="fa-solid fa-gears"></i> Lancer l'extraction
-        </button>
-    </form>
+  <?php if($rapport_python): ?>
+    <div class="alert"><?php echo $message; ?></div>
+  <?php endif; ?>
 
-    <?php if ($error): ?>
-        <div style="margin-top: 20px; padding: 15px; background-color: #ffebee; color: #c62828; border-radius: 8px; border: 1px solid #ffcdd2;">
-            <i class="fa-solid fa-triangle-exclamation"></i> <?php echo $error; ?>
-        </div>
-    <?php endif; ?>
+  <hr>
 
-    <?php if ($results): ?>
-        <div class="results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 40px;">
-            <?php foreach ($results as $contact): ?>
-                <div class="contact-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 4px solid #00695c;">
-                    <h3 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 1.1rem;">
-                        <i class="fa-solid fa-user" style="color: #b2dfdb;"></i> 
-                        <?php echo htmlspecialchars($contact['nom']); ?>
-                    </h3>
-                    <div style="background: #f4f7f6; padding: 10px; border-radius: 8px;">
-                        <i class="fa-solid fa-phone" style="color: #00695c;"></i> 
-                        <strong style="color: #333;"><?php echo htmlspecialchars($contact['numeros']); ?></strong>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+  <div class="annuaire">
+
+    <?php
+
+    foreach ($contacts as $contact) {
+      echo "<div class='contact'>";
+      echo "<h3>" . htmlspecialchars($contact['Nom']) . htmlspecialchars($contact['Prenom']) . "</h3>";
+
+      echo "<div class='contact-info'>";
+      
+      if (!empty($contact['Service'])){
+        echo "<p>Service: " . htmlspecialchars($contact['Service']) . "</p>";
+      }
+
+      if (!empty($contact['Fonction'])){
+        echo "<p>Fonction: " . htmlspecialchars($contact['Fonction']) . "</p>";
+      }
+
+      if (!empty($contact['NumInterne'])){
+        echo "<p>Numéro interne: " . htmlspecialchars($contact['NumInterne']) . "</p>";
+      }
+      
+      if (!empty($contact['NumMobile'])){
+        echo "<p>Téléphone Mobile: " . htmlspecialchars($contact['NumMobile']) . "</p>";
+      }
+      
+      if (!empty($contact['NumFixe'])){
+        echo "<p>Téléphone Fixe: " . htmlspecialchars($contact['NumFixe']) . "</p>";
+      }
+      
+      echo "<form action='' method='post'>";
+      echo "<input type='hidden' name='delete_id' value='" . $contact['id'] . "'>";
+      echo "<button type='submit'>Supprimer</button>";
+      echo "</form>";
+      
+      echo "</div>";
+      echo "</div>";
+    }
+    
+    ?>
+    
+  </div>
+  
 </div>
