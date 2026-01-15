@@ -249,3 +249,48 @@ function initPasswordTester() {
         }
     }, 100);
 }
+
+
+
+
+
+
+
+
+// =========================================================================
+// MODULE 3 : L'ANNUAIRE (Page annuary.php)
+// =========================================================================
+
+
+// Gestion du Drag & Drop et Input File
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('csv_file');
+const importBtn = document.getElementById('importBtn');
+const promptTxt = drpZone.querySelector('.drop-zone__prompt');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+        promptTxt.textContent = "Fichier prêt : " + fileInput.files[0].name;
+        dropZone.style.backgroundColor = "#004d40";
+        inportBtn.style.display = "block";
+    }
+});
+
+dropZone.addEventListener('dragover', (e) => {
+    dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        promptTxt.textContent = "Fichier prêt : " + fileInput.files[0].name;
+        dropZone.style.backgroundColor = "#004d40";
+        importBtn.style.display = "block";
+    }
+});

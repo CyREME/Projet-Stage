@@ -439,25 +439,55 @@ h1 {
    ========================================= */
 
 #annuaryBody {
-    margin: 0;
-    padding: 0;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.form-drop-zone {
+    width: 100%;
+    margin-bottom: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.form-drop-zone {
+.drop-zone {
+    width: 100%;
+    height: 120px;
+    border: 2px dashed #004d40;
+    border-radius: 10px;
+    background-color: #f0f7f6;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 150vh;
-    height: 20vh;
-    border: 2px dashed #ccc;
-    border-radius: 10px;
-    background-color: #f9f9f9;
-    margin-bottom: 20px
+    cursor: pointer;
+    transition: background 0.3s;
+    color: #555;
+    font-weight: 500;
 }
+
+.drop-zone:hover, .drop-zone.dragover {
+    background-color: #b2dfdb;
+}
+
+.drop-zone__input {
+    display: none;
+}
+
+.btn-import {
+    margin-top: 15px;
+    padding: 10px 25px;
+    background-color: #004d40;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
 
 .annuaire {
     display: flex;
