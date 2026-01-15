@@ -8,12 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavBar();
 
     // 2. Détection de la page active via l'ID du body
-    const bodyId = document.body.id;
 
-    if (bodyId === 'pswGenBody') {
+    if (document.body.id === 'pswGenBody') {
         initPasswordGenerator();
-    } else if (bodyId === 'pswTestBody') {
+    } 
+    else if (document.body.id === 'pswTestBody') {
         initPasswordTester();
+    }
+    // AJOUT : On détecte si la div principale de l'annuaire existe
+    else if (document.getElementById('annuaryBody')) {
+        initAnnuaire();
     }
 });
 
@@ -226,7 +230,7 @@ function initPasswordTester() {
         try {
             const text = await navigator.clipboard.readText();
             if (text && pswInput) {
-                pswInput.value = text;
+                pswInput.value = text.substring(0, 50);
                 console.log("Texte collé, attente de zxcvbn...");
 
                 // On vérifie toutes les 100ms si zxcvbn est chargé
@@ -263,34 +267,220 @@ function initPasswordTester() {
 
 
 // Gestion du Drag & Drop et Input File
+function initAnnuaire() {
 
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('csv_file');
-const importBtn = document.getElementById('importBtn');
-const promptTxt = drpZone.querySelector('.drop-zone__prompt');
+    // --- 1. FONCTIONS UTILES (Accessibles partout dans initAnnuaire) ---
 
-dropZone.addEventListener('click', () => fileInput.click());
+    // Fonction pour gérer l'ouverture/fermeture accordéon
+    const setupAccordion = (element) => {
+        element.addEventListener('click', function(e) {
+            // Si on clique dans un champ de formulaire ou un bouton, on ne ferme pas
+            if (e.target.closest('button') || e.target.closest('form') || e.target.closest('input') || e.target.closest('label') || e.target.closest('textarea')) {
+                return;
+            }
+            this.classList.toggle('active');
+        });
+    };
 
-fileInput.addEventListener('change', () => {
-    if (fileInput.files.length) {
-        promptTxt.textContent = "Fichier prêt : " + fileInput.files[0].name;
-        dropZone.style.backgroundColor = "#004d40";
-        inportBtn.style.display = "block";
+    // Fonction auto-resize textarea
+    const autoResize = (el) => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    };
+
+    const setupTextarea = (element) => {
+        autoResize(element);
+        element.addEventListener('input', function() { autoResize(this); });
+    };
+
+
+    // --- 2. INITIALISATION SUR LES ELEMENTS EXISTANTS ---
+    document.querySelectorAll('.contact').forEach(el => setupAccordion(el));
+    document.querySelectorAll('.contact-infos textarea').forEach(el => setupTextarea(el));
+
+
+    // --- 3. GESTION DRAG & DROP ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('csv_file');
+    const importBtn = document.getElementById('importBtn');
+
+    if (dropZone && fileInput) {
+        const promptTxt = dropZone.querySelector('.drop-zone__prompt');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => { if(fileInput.files.length) updateThumbnail(fileInput.files[0]); });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateThumbnail(e.dataTransfer.files[0]);
+            }
+        });
+
+        function updateThumbnail(file) {
+            if (promptTxt) promptTxt.textContent = "Fichier prêt : " + file.name;
+            dropZone.style.borderColor = "#004d40";
+            dropZone.style.backgroundColor = "#e0f2f1";
+            if (importBtn) importBtn.style.display = "block";
+        }
     }
-});
 
-dropZone.addEventListener('dragover', (e) => {
-    dropZone.classList.add('dragover');
-});
 
-dropZone.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
+    // --- 4. MODAL & CREATION DYNAMIQUE DE CONTACT ---
+    const btnOpenModal = document.getElementById('btnOpenModal');
+    const modalOverlay = document.getElementById('modalAddContact');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
+    const modalNom = document.getElementById('modalNom');
+    const modalPrenom = document.getElementById('modalPrenom');
+    const annuaireList = document.querySelector('.annuaire'); // Le conteneur de la liste
 
-    if (e.dataTransfer.files.length) {
-        fileInput.files = e.dataTransfer.files;
-        promptTxt.textContent = "Fichier prêt : " + fileInput.files[0].name;
-        dropZone.style.backgroundColor = "#004d40";
-        importBtn.style.display = "block";
+    // Ouvrir la modal
+    if(btnOpenModal) {
+        btnOpenModal.addEventListener('click', () => {
+            modalOverlay.classList.add('open');
+            modalNom.value = "";
+            modalPrenom.value = "";
+            modalNom.focus();
+        });
     }
-});
+
+    // Fermer la modal
+    if(modalCancel) {
+        modalCancel.addEventListener('click', () => {
+            modalOverlay.classList.remove('open');
+        });
+    }
+
+    // Convertir NOM en majuscule en direct
+    if(modalNom) {
+        modalNom.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    if(modalPrenom) {
+        modalPrenom.addEventListener('input', function() {
+            this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase();
+        })
+    }
+
+    // CONFIRMER LA CREATION
+    if(modalConfirm) {
+        modalConfirm.addEventListener('click', () => {
+            const nom = modalNom.value.trim();
+            const prenom = modalPrenom.value.trim();
+
+            if(nom === "" || prenom === "") {
+                alert("Merci de remplir le Nom et le Prénom.");
+                return;
+            }
+
+            // 1. Fermer la modal
+            modalOverlay.classList.remove('open');
+
+            // 2. Créer le HTML de la nouvelle fiche
+            // Note : On met name="create_contact" sur le bouton submit
+            // et on pré-remplit des inputs hidden pour nom et prénom
+            const newContactHTML = `
+            <div class='contact active' style="animation: fadeIn 0.5s;">
+                <h3>${nom} ${prenom} <span style="font-size:0.8em; color:#004d40;">(Nouveau)</span></h3>
+
+                <div class='contact-infos'>
+                    <form action="" method="post" class="form-update">
+                        <input type="hidden" name="new_nom" value="${nom}">
+                        <input type="hidden" name="new_prenom" value="${prenom}">
+
+                        <div class='contact-infos-group'>
+                            <div class='contact-info-details'>
+                                <label>Service :</label>
+                                <textarea name="new_service" rows="1" placeholder="Service..."></textarea>
+                            </div>
+                            <div class='contact-info-details'>
+                                <label>Fonction :</label>
+                                <textarea name="new_fonction" rows="1" placeholder="Fonction..."></textarea>
+                            </div>
+                            <div class='contact-info-details'>
+                                <label>Interne :</label>
+                                <textarea name="new_interne" class="num-interne" rows="1"></textarea>
+                            </div>
+                            <div class='contact-info-details'>
+                                <label>Mobile :</label>
+                                <textarea name="new_mobile" class="num-tel" rows="1"></textarea>
+                            </div>
+                            <div class='contact-info-details'>
+                                <label>Fixe :</label>
+                                <textarea name="new_fixe" class="num-tel" rows="1"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="contact-modif">
+                            <button type="submit" name="create_contact" class="btn-modif-contact">Valider la création</button>
+                            <button type="button" class="btn-supp-contact" onclick="this.closest('.contact').remove()">Annuler</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            `;
+
+            // 3. Insérer au début de la liste (prepend)
+            // On crée un element temporaire pour le transformer en noeud DOM
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newContactHTML.trim();
+            const newElement = tempDiv.firstChild;
+
+            // Insérer tout en haut
+            annuaireList.insertBefore(newElement, annuaireList.firstChild);
+
+            // 4. Activer les scripts (Accordéon + AutoResize) sur ce nouvel élément
+            setupAccordion(newElement);
+            newElement.querySelectorAll('textarea').forEach(el => setupTextarea(el));
+
+            // 5. Scroll vers l'élément
+            newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+
+
+    // --- 5. BARRE DE RECHERCHE (Ton code existant) ---
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    let searchTimeout = null;
+
+    const filterContacts = () => {
+        const filterValue = searchInput.value.toLowerCase().trim();
+        const allContacts = document.querySelectorAll('.contact');
+
+        allContacts.forEach(contact => {
+            const nameText = contact.querySelector('h3').innerText.toLowerCase();
+            let fieldsText = "";
+            contact.querySelectorAll('textarea').forEach(t => fieldsText += " " + t.value.toLowerCase());
+
+            if ((nameText + fieldsText).includes(filterValue)) {
+                contact.style.display = ""; 
+            } else {
+                contact.style.display = "none";
+            }
+        });
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => filterContacts(), 300);
+        });
+    }
+
+    if (searchButton) {
+        searchButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            filterContacts();
+        });
+    }
+}
