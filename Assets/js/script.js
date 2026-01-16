@@ -357,6 +357,19 @@ function initAnnuaire() {
         });
     }
 
+
+    // Fermer la modal en dehors de la boite
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('open');
+            }
+        });
+    }
+    
+    
+    
+
     // Convertir NOM en majuscule en direct
     if(modalNom) {
         modalNom.addEventListener('input', function() {
@@ -366,7 +379,9 @@ function initAnnuaire() {
 
     if(modalPrenom) {
         modalPrenom.addEventListener('input', function() {
-            this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase();
+            this.value = this.value.replace(/(?:^|[\s-])\w/g, function(match) {
+                return match.toUpperCase();
+            });
         })
     }
 
@@ -443,6 +458,9 @@ function initAnnuaire() {
 
             // 5. Scroll vers l'élément
             newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const firstInput = newElement.querySelector('textarea[name="new_service"]');
+            if (firstInput) firstInput.focus();
         });
     }
 
@@ -469,6 +487,11 @@ function initAnnuaire() {
         });
     };
 
+    // Scanner immédiatement quand la page charge si la barre à du texte
+    if (searchInput && searchInput.value.trim() !== "") {
+        filterContacts();
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -483,4 +506,95 @@ function initAnnuaire() {
             filterContacts();
         });
     }
+
+    window.addEventListener('pageshow', () => {
+        if (searchInput && searchInput.value.trim() !== "") {
+            filterContacts();
+        }
+    });
+    
+    // --- 4. MODAL & SUPPRESSION DE TOUS LES CONTACTES ---
+    const btnOpenModalDelete = document.getElementById('btnOpenDeleteAll');
+    const modalDeleteAll = document.getElementById('modalDeleteAll');
+    const btnCancelModalDelete = document.getElementById('modalCancelDelete');
+    const btnConfirmModalDelete = document.getElementById('modalConfirmDelete');
+
+
+    // Ouvrir la modal
+    if (btnOpenModalDelete && modalDeleteAll) {
+        btnOpenModalDelete.addEventListener('click', () => {
+            modalDeleteAll.classList.add('open');
+        });
+    } 
+
+    // Fermer la modal
+    if (btnCancelModalDelete && modalDeleteAll) {
+        btnCancelModalDelete.addEventListener('click', () => {
+            modalDeleteAll.classList.remove('open');
+        });
+    }
+
+    // Fermer la modal en dehors de la boite
+    if (modalDeleteAll) {
+        modalDeleteAll.addEventListener('click', (e) => {
+            if (e.target === modalDeleteAll) {
+                modalDeleteAll.classList.remove('open');
+            }
+        });
+    }
+
+
+    // CONFIRMER LA SUPPRESSION
+    if (btnConfirmModalDelete) {
+        btnConfirmModalDelete.addEventListener('click', () => {
+            modalDeleteAll.classList.remove('open');
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'delete_all';
+            input.value = 'true';
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            
+        })
+    }
+
+
+
+    // --- 5. NOTIFICATIONS ---
+    
+    // Fonction pour afficher une notification
+    function showNotification(message) {
+        const notif = document.getElementById('notifAnnuaire');
+        const type = document.getElementById('notif-message').getAttribute('data-type');
+        
+        if (type === 'erreur' || type === 'error') {
+            notif.style.backgroundColor = '#ef5350';
+        } else {
+            notif.style.backgroundColor = '#004d40';
+        }
+        
+        if (notif) {
+            notif.classList.add('show');
+        }
+    
+        setTimeout(() => {
+            if (notif) {
+                notif.classList.remove('show');
+            }
+        }, 3000);
+    }
+    
+    // Afficher la notification si le message existe
+    const notifMessage = document.getElementById('notif-message');
+    if (notifMessage && notifMessage.textContent.trim() !== "") {
+        showNotification(notifMessage.textContent);
+    }
+
 }

@@ -1,3 +1,15 @@
+<?php
+session_start();
+
+
+ob_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+    
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -39,3 +51,9 @@ if (isset($_GET['page'])) {
 
 </body>
 </html>
+
+<?php
+
+ob_end_flush();
+
+?>

@@ -7,34 +7,64 @@
   Ordre: 3
 */
 
+
 include_once __DIR__ . '/../Fonction/Fonctions.php';
 $pdo = connectDb();
-$message = "";
 
-// --- UPSERT ---
+// LIGNE DE TEST À AJOUTER TEMPORAIREMENT
+
+$message = "";
+$messageType = "success";
+
+if (isset($_SESSION['flash_message'])) {
+  $message = $_SESSION['flash_message'];
+  $messageType = $_SESSION['flash_message_type'] ?? 'success';
+
+  unset($_SESSION['flash_message']);
+  unset($_SESSION['flash_message_type']);
+} 
+
+
+// Redirection vers la même page
+function redirectWithSuccess($msg, $type = 'success') {
+  $_SESSION['flash_message'] = $msg;
+  $_SESSION['flash_message_type'] = $type;
+  
+  header("Location: " . $_SERVER['REQUEST_URI']);
+  exit();
+}
+
+// --- SEARCH ---
+if (isset($_SESSION['search_auto'])) {
+  $searchValue = $_SESSION['search_auto'];
+  unset($_SESSION['search_auto']);
+} elseif (isset($_POST['search'])) {
+  $searchValue = $_POST['search'];
+} else {
+  $searchValue = "";
+}
+
+
+// --- INSERT ---
 if (isset($_POST['create_contact'])) {
     $nom = strtoupper(trim($_POST['new_nom']));
     $prenom = trim($_POST['new_prenom']);
 
     if (!empty($nom) && !empty($prenom)) {
-        $sql = 'INSERT INTO "Cotrans" 
-                ("Nom", "Prenom", "Service", "Fonction", "NumInterne", "NumMobile", "NumFixe")
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT ("Nom", "Prenom") 
-                DO UPDATE SET
-                    "Service" = EXCLUDED."Service",
-                    "Fonction" = EXCLUDED."Fonction",
-                    "NumInterne" = EXCLUDED."NumInterne",
-                    "NumMobile" = EXCLUDED."NumMobile",
-                    "NumFixe" = EXCLUDED."NumFixe"';
+      $sql = 'INSERT INTO "Cotrans" 
+              ("Nom", "Prenom", "Service", "Fonction", "NumInterne", "NumMobile", "NumFixe")
+              VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            $nom, $prenom,
-            $_POST['new_service'], $_POST['new_fonction'],
-            $_POST['new_interne'], $_POST['new_mobile'], $_POST['new_fixe']
-        ]);
-        $message = "Contact enregistré avec succès !";
+      $stmt = $pdo->prepare($sql);
+      $stmt->execute([
+          $nom, $prenom,
+          $_POST['new_service'], $_POST['new_fonction'],
+          $_POST['new_interne'], $_POST['new_mobile'], $_POST['new_fixe']
+      ]);
+
+      $_SESSION['search_auto'] = $nom . " " . $prenom;
+      
+      redirectWithSuccess("Contact créé avec succès !", "success");
     }
 }
 
@@ -58,7 +88,7 @@ if (isset($_POST['update_id'])) {
       $_POST['update_id']
   ]);
 
-  $message = "Les modifications ont été enregistrées avec succès."; 
+  redirectWithSuccess("Contact mis à jour avec succès !", "success"); 
 }
 
 // --- IMPORT ---
@@ -79,13 +109,11 @@ if (isset($_POST['import'])) {
     $script_path = __DIR__ . '/../Python/fonctions.py';
     $commande = "python3 " . escapeshellarg($script_path) . " extractData 2>&1";
     $output = shell_exec($commande);
-    $rapport_python = $output;
-    
-    #echo "<h3>Rapport du script Python :</h3>";
-    #echo "<pre>" . $output . "</pre>";
+
+    redirectWithSuccess("Fichier importé avec succès.", "success");
 
 } else {
-    #echo "Erreur d'upload.";
+    redirectWithSuccess("Erreur lors de l'importation du fichier.", "erreur");
   }
 }
 
@@ -93,11 +121,22 @@ if (isset($_POST['import'])) {
 if (isset($_POST['delete_id'])) {
   $stmt = $pdo->prepare('DELETE FROM "Cotrans" WHERE "id" = ?');
   $stmt->execute([$_POST['delete_id']]);
-  $message = "L'entrée a été supprimée avec succès.";
+
+  redirectWithSuccess("Contact supprimé avec succès.", "success");
+}
+
+// --- DELETE ALL ---
+if (isset($_POST['delete_all'])) {
+  $stmt = $pdo->prepare('TRUNCATE TABLE "Cotrans" RESTART IDENTITY;');
+  $stmt->execute();
+
+  redirectWithSuccess("Tous les contacts ont été supprimés avec succès.", "success");
 }
 
 $contacts = getData();
-  
+
+
+
 ?>
 
 <!-- HTML -->
@@ -115,14 +154,20 @@ $contacts = getData();
   <hr>
   
   <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Rechercher un contact...">
-    <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i></button>
+    
+    <input type="text" id="searchInput" placeholder="Rechercher un contact..." value="<?= htmlspecialchars($searchValue) ?>">
+    
     <div class="add-contact-section">
         <button id="btnOpenModal" class="btn-add-contact">
             <i class="fa-solid fa-user-plus"></i> Ajouter un contact
         </button>
     </div>
+    
+    <div class="delete-all-contacts">
+      <button id="btnOpenDeleteAll" class="btn-delete-all" type="button"><i class="fa-solid fa-trash"></i></button>
+    </div>
   </div>
+
 
   
   
@@ -193,4 +238,28 @@ $contacts = getData();
       </div>
   </div>
 
+  <div id="modalDeleteAll" class="modal-overlay">
+      <div class="modal-box">
+          <h3>Attention !</h3>
+          <p>Voulez-vous vraiment supprimer <strong>TOUS</strong> les contacts ?</p>
+          <p>Cette action est irréversible.</p>
+
+          <div class="modal-buttons">
+              <button id="modalCancelDelete" class="btn-modal-cancel">Annuler</button>
+              <button id="modalConfirmDelete" class="btn-modal-confirm">Tout Supprimer</button>
+          </div>
+      </div>
+  </div>
+
+
+  <!--- Partie pour les notifications --->
+  <div class="notif-annuaire" id="notifAnnuaire">
+    <?php if (!empty($message)): ?>
+      <div class="notif-annuaire-message" id="notif-message" data-type="<?= htmlspecialchars($messageType)?>">
+        <?= htmlspecialchars($message) ?>
+      </div>
+    <?php endif;?>
+  </div>
+  
+  
 </div>
