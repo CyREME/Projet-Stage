@@ -46,12 +46,28 @@ def merged_Cells():
   wb.save(FILE_PATH)
   wb.close()
 
-def contact_Existe(new_nom, new_prenom, contacts):
+def contact_Existe(new_nom, new_prenom, new_service, new_fonctions, newInterne, newMobile, newFixe, contacts):
   for c in contacts.values():
     existing_nom = c.get("nom", "").lower()
     existing_prenom = c.get("prenom", "").lower()
     
-    if existing_nom == new_nom.lower() and existing_prenom == new_prenom.lower() :
+    if existing_nom == new_nom.lower() and existing_prenom == new_prenom.lower():
+
+      champs = [
+        ("service", new_service),
+        ("fonctions", new_fonctions),
+        ("numInterne", newInterne),
+        ("numMobile", newMobile),
+        ("numFixe", newFixe)
+      ]
+
+      for champ , new_val in champs:
+        if new_val not in c[champ] and new_val != "":
+          if c[champ] != "":
+            c[champ] += "\n" + new_val
+          else:
+            c[champ] = new_val
+    
       return True
   return False
 
@@ -61,7 +77,16 @@ def get_data():
   df = pd.read_excel(FILE_PATH, dtype="str")
 
   dictContacts = check_Json()
-  indexContact = len(dictContacts) + 1
+  
+  if dictContacts:
+    # On convertit les clés en entiers pour trouver le max
+    ids = [int(k) for k in dictContacts.keys() if k.isdigit()]
+    if ids:
+        indexContact = max(ids) + 1
+    else:
+        indexContact = 1
+  else:
+    indexContact = 1
 
   for index, row in df.iterrows():
 
@@ -122,7 +147,7 @@ def get_data():
       numFixe = "0" + numFixe
 
 
-    if contact_Existe(nom, prenom, dictContacts):
+    if contact_Existe(nom, prenom, service, fonctions, numInterne, numMobile, numFixe, dictContacts):
       continue
     
     
@@ -149,7 +174,6 @@ if __name__ == "__main__":
       # Si PHP envoie un argument, on l'utilise
       if len(sys.argv) > 1:
           FILE_PATH = sys.argv[1]
-
       get_data()
   except Exception as e:
       # En cas d'erreur, on l'affiche pour que PHP la récupère
