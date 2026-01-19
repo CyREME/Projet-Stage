@@ -1,177 +1,156 @@
 import sys
 import os
-import psycopg2
-import pandas as pd
 import json
+import math
+import pandas as pd
 from openpyxl import load_workbook
 
-def connectDB():
-  db_host = os.environ.get('DB_HOST')
-  db_name = os.environ.get('DB_NAME')
-  db_user = os.environ.get('DB_USER')
-  db_pass = os.environ.get('DB_PASS')
+# On récupère le dossier où se trouve ce fichier (fonctions.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-  try:
-    
-    conn = psycopg2.connect(
-      host=db_host,
-      database=db_name,
-      user=db_user,
-      password=db_pass
-    )
-    return conn
-    
-  except Exception as e:
-    print(f"Erreur de connexion à la base de données : {e}")
+# On définit les chemins par rapport à ce dossier
+# Par défaut (si pas d'argument), on tape dans Temp/import.xlsx
+FILE_PATH = os.path.join(BASE_DIR, '..', 'Temp', 'import.xlsx')
+JSON_PATH = os.path.join(BASE_DIR, '..', 'Json', 'contacts.json')
+
+def check_Json():
+  if os.path.exists(JSON_PATH):
+    with open(JSON_PATH, 'r') as file:
+      data = json.load(file)
+      return data
+  else:
+    os.makedirs(os.path.dirname(JSON_PATH), exist_ok=True)
+    with open(JSON_PATH, 'w') as file:
+      json.dump({}, file)
+    return {}
+  
 
 
-
-def reparer_cellules_fusionnees(chemin_fichier):
-  """
-  Cette fonction détecte les cellules fusionnées, récupère la valeur 
-  de la première cellule, 'défusionne' le bloc, et remplit toutes 
-  les cellules du bloc avec cette valeur.
-  """
-  wb = load_workbook(chemin_fichier)
+def merged_Cells():
+  wb = load_workbook(FILE_PATH)
   ws = wb.active
+  
+  for merged_range in list(ws.merged_cells.ranges):
+    
+    borne = str(merged_range)
 
-  # On récupère la liste des zones fusionnées
-  # On convertit en liste pour pouvoir modifier la feuille sans casser la boucle
-  merged_ranges = list(ws.merged_cells.ranges)
+    val = ws.cell(row=merged_range.min_row, column=merged_range.min_col).value
 
-  for group in merged_ranges:
-      # 1. On identifie les limites du groupe (ex: A1:A4)
-      min_col, min_row, max_col, max_row = group.min_col, group.min_row, group.max_col, group.max_row
+    ws.unmerge_cells(borne)
 
-      # 2. On prend la valeur de la cellule en haut à gauche (la "vraie" valeur)
-      top_left_cell_value = ws.cell(row=min_row, column=min_col).value
+    cell_range = ws[borne]
+    for row in cell_range:
+      for cell in row:
+        cell.value = val
 
-      # 3. On défusionne la zone pour pouvoir écrire dedans
-      ws.unmerge_cells(start_row=min_row, start_column=min_col, end_row=max_row, end_column=max_col)
-
-      # 4. On remplit toutes les cellules de la zone avec la valeur récupérée
-      for row in range(min_row, max_row + 1):
-          for col in range(min_col, max_col + 1):
-              cell = ws.cell(row=row, column=col)
-              cell.value = top_left_cell_value
-
-  # On sauvegarde le fichier réparé (on écrase ou on crée un temporaire)
-  wb.save(chemin_fichier)
+  wb.save(FILE_PATH)
   wb.close()
 
+def contact_Existe(new_nom, new_prenom, contacts):
+  for c in contacts.values():
+    existing_nom = c.get("nom", "").lower()
+    existing_prenom = c.get("prenom", "").lower()
+    
+    if existing_nom == new_nom.lower() and existing_prenom == new_prenom.lower() :
+      return True
+  return False
 
+def get_data():
+  merged_Cells()
+  # Chemin du fichier JSON
+  df = pd.read_excel(FILE_PATH, dtype="str")
 
+  dictContacts = check_Json()
+  indexContact = len(dictContacts) + 1
 
-def extractData():
-
-  conn = connectDB()
-  if conn is None:
-    return
-
-  cur = conn.cursor()
-  
-  dossier_actuel = os.path.dirname(os.path.abspath(__file__))
-
-  fichier = os.path.join(dossier_actuel, "../Temp/import.xlsx")
-
-  reparer_cellules_fusionnees(fichier)
-  
-  df = pd.read_excel(fichier, dtype=str)
-  df = df.fillna("")
-
-  sql = """
-  INSERT INTO "Cotrans" 
-  ("Nom", "Prenom", "Service", "Fonction", "NumInterne", "NumMobile", "NumFixe")
-  VALUES (%s, %s, %s, %s, %s, %s, %s)
-  ON CONFLICT ("Nom", "Prenom") 
-  DO UPDATE SET
-  "Service" = EXCLUDED."Service",
-  "Fonction" = EXCLUDED."Fonction",
-  "NumInterne" = EXCLUDED."NumInterne",
-  "NumMobile" = EXCLUDED."NumMobile",
-  "NumFixe" = EXCLUDED."NumFixe"
-  """
-  
   for index, row in df.iterrows():
 
-    #### NOM ET PRENOM ####
-    nomData = row['NOMS'].split()
+    # Partie pour le Nom & Prenom
+    nomCompose = row['NOMS'].split()
     nom = ""
     prenom = ""
-    for i in range(len(nomData)):
-      if (nomData[i].isupper()):
-        nom += nomData[i] + " "
+    
+    for word in nomCompose:
+      if word.isupper():
+        nom += word + " "
       else:
-        prenom += nomData[i] + " "
+        prenom += word + " "
+        
+    nom = nom.rstrip()
+    prenom = prenom.rstrip()
 
-    ## SERVICE ##
+
+
+    # Partie pour le Service
     service = row['SERVICE']
+    if pd.isna(service):
+      service = ""
+
+    # Partie pour les fonctions
+    fonctions = row['FONCTIONS']
+
+    if pd.isna(fonctions):
+      fonctions = ""
+
+    # Partie Numéro Interne
+    numInterne = row['Interne']
+
+    if pd.isna(numInterne):
+      numInterne = ""
     
-    ## FONCTION ##
-    fonction = row['FONCTIONS']
+    # Partie numéro Mobile
+    numMobile = row['TEL MOBILE']
     
-    ## NUMERO INTERNE ##
-    numInterne = str(row['Interne'])
-    
-    ## NUMERO TEL MOBILE ##
-    numMobileData = str(row['TEL MOBILE']).split()
-    numMobile = ""
-    if (len(numMobileData) > 1):
-      for i in range(len(numMobileData)):
-        if len(numMobileData[i]) == 9:
-          numMobile = "0" + numMobileData[i]
-        else:
-          numMobile += numMobileData[i] + ";"
-          
-    elif len(numMobileData) == 0:
+    if pd.isna(numMobile):
       numMobile = ""
-    else:
-      if len(numMobileData[0]) == 9:
-        numMobile = "0" + numMobileData[0]
-    
-    ## NUMERO TEL FIXE ##
-    numFixeData = str(row['TEL FIXE']).split()
-    numFixe = ""
-    if len(numFixeData) > 1:
-      for i in range(len(numFixeData)):
-        numFixe += numFixeData[i] + ";"
-    elif len(numFixeData) == 0:
+
+    numMobile = numMobile.replace("_x000D_", " ")
+
+    if len(numMobile) == 9:
+      numMobile = "0" + numMobile
+
+
+    # Partie numéro Fixe
+    numFixe = row['TEL FIXE']
+
+    if pd.isna(numFixe):
       numFixe = ""
-    else:
-      numFixe = numFixeData[0]
+
+    numFixe = numFixe.replace("_x000D_", " ")
+
+    if len(numFixe) == 9:
+      numFixe = "0" + numFixe
 
 
-    valeurs = (nom, prenom, service, fonction, numInterne, numMobile, numFixe)
-
-    try: 
-      cur.execute(sql, valeurs)
-    except Exception as e:
-      print(f"Erreur lors de l'insertion des données : {e}")
-
-  conn.commit()
-  print("Données insérées avec succès !")
-
-  cur.close()
-  conn.close()
-
-  os.remove(fichier)
-
-
-
-if  __name__ == "__main__":
-  # sys.argv[0] nom du script
-  # sys.argv[1] nom de la fonction
-  # sys.argv[2] le fichier
-
-  if len(sys.argv) > 1:
-    action = sys.argv[1]
-
-    if action == "extractData":
-      extractData()
-
-    else:
-      print(f"Action '{action}' non reconnue")
-
-else:
-  print("Erreur : Aucun action précisé")
+    if contact_Existe(nom, prenom, dictContacts):
+      continue
     
+    
+    dictContacts[indexContact] = {
+      "id": str(indexContact),
+      "nom": nom,
+      "prenom": prenom,
+      "service": service,
+      "fonctions": fonctions,
+      "numInterne": numInterne,
+      "numMobile": numMobile,
+      "numFixe": numFixe
+    }
+    indexContact += 1
+    
+  
+  with open(JSON_PATH, 'w') as file:
+    json.dump(dictContacts, file, indent=4, ensure_ascii=False)
+
+  os.remove(FILE_PATH)
+
+if __name__ == "__main__":
+  try:
+      # Si PHP envoie un argument, on l'utilise
+      if len(sys.argv) > 1:
+          FILE_PATH = sys.argv[1]
+
+      get_data()
+  except Exception as e:
+      # En cas d'erreur, on l'affiche pour que PHP la récupère
+      print(f"ERREUR PYTHON : {e}")

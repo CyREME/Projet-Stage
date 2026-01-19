@@ -9,9 +9,8 @@
 
 
 include_once __DIR__ . '/../Fonction/Fonctions.php';
-$pdo = connectDb();
+$json_path = __DIR__ . '/../Json/contacts.json';
 
-// LIGNE DE TEST À AJOUTER TEMPORAIREMENT
 
 $message = "";
 $messageType = "success";
@@ -40,6 +39,7 @@ if (isset($_SESSION['search_auto'])) {
   unset($_SESSION['search_auto']);
 } elseif (isset($_POST['search'])) {
   $searchValue = $_POST['search'];
+  
 } else {
   $searchValue = "";
 }
@@ -51,44 +51,108 @@ if (isset($_POST['create_contact'])) {
     $prenom = trim($_POST['new_prenom']);
 
     if (!empty($nom) && !empty($prenom)) {
-      $sql = 'INSERT INTO "Cotrans" 
-              ("Nom", "Prenom", "Service", "Fonction", "NumInterne", "NumMobile", "NumFixe")
-              VALUES (?, ?, ?, ?, ?, ?, ?)';
+      $json_path = __DIR__ . '/../Json/contacts.json';
 
-      $stmt = $pdo->prepare($sql);
-      $stmt->execute([
-          $nom, $prenom,
-          $_POST['new_service'], $_POST['new_fonction'],
-          $_POST['new_interne'], $_POST['new_mobile'], $_POST['new_fixe']
-      ]);
+      $contacts = [];
+      if (file_exists($json_path)) {
+        $json_content = file_get_contents($json_path);
+        $contacts = json_decode($json_content, true);
+      } else {
+        $contacts = [];
+      }
+
+      $new_id = 1;
+      if (!empty($contacts)) {
+        $ids = array_keys($contacts);
+        $new_id = max($ids) + 1;
+      }
+
+      $newContact = [
+        "id" => (string)$new_id,
+        "nom" => $nom,
+        "prenom" => $prenom,
+        "service" => $_POST['new_service'] ?? "",
+        "fonctions" => $_POST['new_fonction'] ?? "",
+        "numInterne" => $_POST['new_num_interne'] ?? "",
+        "numMobile" => $_POST['new_num_mobile'] ?? "",
+        "numFixe" => $_POST['new_num_fixe'] ?? ""
+      ];
+
+      $contacts[$new_id] = $newContact;
+
+      file_put_contents($json_path, json_encode($contacts, JSON_PRETTY_PRINT));
 
       $_SESSION['search_auto'] = $nom . " " . $prenom;
       
       redirectWithSuccess("Contact créé avec succès !", "success");
+    } else {
+      redirectWithSuccess("Erreur : Le nom et le prénom sont obligatoires.", "erreur");
     }
+}
+
+
+// --- DELETE ---
+if (isset($_POST['delete_id'])) {
+
+  $delete_id = $_POST['delete_id'];
+
+  $json_path = __DIR__ . '/../Json/contacts.json';
+
+  if (file_exists($json_path)) {
+    $json_content = file_get_contents($json_path);
+    $contacts = json_decode($json_content, true);
+
+    unset($contacts[$delete_id]);
+    file_put_contents($json_path, json_encode($contacts, JSON_PRETTY_PRINT));
+  }
+
+  redirectWithSuccess("Contact supprimé avec succès.", "success");
+}
+
+// --- DELETE ALL ---
+if (isset($_POST['delete_all'])) {
+
+  $json_path = __DIR__ . '/../Json/contacts.json';
+
+  if (!file_exists($json_path)) {
+    redirectWithSuccess("Aucun contact à supprimer.", "erreur");
+  }
+
+  file_put_contents($json_path, '{}');
+  
+
 }
 
 // --- UPDATE ---
 if (isset($_POST['update_id'])) {
-  $sql = 'UPDATE "Cotrans" SET 
-         "Service" = ?,
-         "Fonction" = ?,
-         "NumInterne" = ?,
-         "NumMobile" = ?,
-         "NumFixe" = ?
-         WHERE "id" = ?';
 
-  $stmt = $pdo->prepare($sql);
-  $stmt->execute([
-      $_POST['service'],
-      $_POST['fonction'],
-      $_POST['num_interne'],
-      $_POST['num_mobile'],
-      $_POST['num_fixe'],
-      $_POST['update_id']
-  ]);
+  $update_id = $_POST['update_id'];
 
-  redirectWithSuccess("Contact mis à jour avec succès !", "success"); 
+  $json_path = __DIR__ . '/../Json/contacts.json';
+
+  if (file_exists($json_path)) {
+    $json_content = file_get_contents($json_path);
+    $contacts = json_decode($json_content, true);
+  } else {
+    $contacts = [];
+  }
+
+  if (isset($contacts[$update_id])) {
+    $contacts[$update_id]['service'] = $_POST['service'];
+    $contacts[$update_id]['fonctions'] = $_POST['fonction'];
+    $contacts[$update_id]['numInterne'] = $_POST['num_interne'];
+    $contacts[$update_id]['numMobile'] = $_POST['num_mobile'];
+    $contacts[$update_id]['numFixe'] = $_POST['num_fixe'];
+
+    file_put_contents($json_path, json_encode($contacts, JSON_PRETTY_PRINT));
+
+    $_SESSION['search_auto'] = $contacts[$update_id]['nom'] . " " . $contacts[$update_id]['prenom'];
+    redirectWithSuccess("Contact mis à jour avec succès !", "success");   
+  } else {
+    redirectWithSuccess("Erreur : Contact non trouvé.", "erreur");
+  }
+  
+
 }
 
 // --- IMPORT ---
@@ -107,8 +171,11 @@ if (isset($_POST['import'])) {
     
   if (move_uploaded_file($templacement_temporaire, $destination)) {
     $script_path = __DIR__ . '/../Python/fonctions.py';
-    $commande = "python3 " . escapeshellarg($script_path) . " extractData 2>&1";
+    $commande = "python3 " . escapeshellarg($script_path) . " " . escapeshellarg($destination) . " 2>&1";
     $output = shell_exec($commande);
+
+    $output = shell_exec($commande);
+    // Pour le debug python : var_dump($output); die();
 
     redirectWithSuccess("Fichier importé avec succès.", "success");
 
@@ -117,25 +184,15 @@ if (isset($_POST['import'])) {
   }
 }
 
-// --- DELETE ---
-if (isset($_POST['delete_id'])) {
-  $stmt = $pdo->prepare('DELETE FROM "Cotrans" WHERE "id" = ?');
-  $stmt->execute([$_POST['delete_id']]);
 
-  redirectWithSuccess("Contact supprimé avec succès.", "success");
+if (file_exists($json_path)){
+  $json_content = file_get_contents($json_path);
+  $contacts = json_decode($json_content, true);
+} elseif (file_exists($json_path) && empty($json_content)) {
+  $contacts = [];
+} else {
+  $contacts = [];
 }
-
-// --- DELETE ALL ---
-if (isset($_POST['delete_all'])) {
-  $stmt = $pdo->prepare('TRUNCATE TABLE "Cotrans" RESTART IDENTITY;');
-  $stmt->execute();
-
-  redirectWithSuccess("Tous les contacts ont été supprimés avec succès.", "success");
-}
-
-$contacts = getData();
-
-
 
 ?>
 
@@ -176,30 +233,30 @@ $contacts = getData();
   <div class="annuaire" id="annuaireList">
       <?php foreach ($contacts as $contact): ?>
         <div class='contact'>
-          <h3><?= htmlspecialchars($contact['Nom']) . " " . htmlspecialchars($contact['Prenom']) ?></h3>
+          <h3><?= htmlspecialchars($contact['nom']) . " " . htmlspecialchars($contact['prenom']) ?></h3>
           <div class='contact-infos'>
             <form action="" method="post" class="form-update">
               <input type="hidden" name="update_id" value="<?= $contact['id'] ?>">
               <div class='contact-infos-group'>
                 <div class='contact-info-details'>
                   <label>Service :</label>
-                  <textarea name="service" rows="1"><?= htmlspecialchars($contact['Service']) ?></textarea>
+                  <textarea name="service" rows="1"><?= htmlspecialchars($contact['service']) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Fonction :</label>
-                  <textarea name="fonction" rows="1"><?= htmlspecialchars($contact['Fonction']) ?></textarea>
+                  <textarea name="fonction" rows="1"><?= htmlspecialchars($contact['fonctions']) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Interne :</label>
-                  <textarea name="num_interne" class="num-interne" rows="1"><?= htmlspecialchars($contact['NumInterne']) ?></textarea>
+                  <textarea name="num_interne" class="num-interne" rows="1"><?= htmlspecialchars($contact['numInterne']) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Mobile :</label>
-                  <textarea name="num_mobile" class="num-tel" rows="1"><?= htmlspecialchars($contact['NumMobile']) ?></textarea>
+                  <textarea name="num_mobile" class="num-tel" rows="1"><?= htmlspecialchars($contact['numMobile']) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Fixe :</label>
-                  <textarea name="num_fixe" class="num-tel" rows="1"><?= htmlspecialchars($contact['NumFixe']) ?></textarea>
+                  <textarea name="num_fixe" class="num-tel" rows="1"><?= htmlspecialchars($contact['numFixe']) ?></textarea>
                 </div>
               </div>
 
