@@ -138,11 +138,11 @@ if (isset($_POST['update_id'])) {
   }
 
   if (isset($contacts[$update_id])) {
-    $contacts[$update_id]['service'] = $_POST['service'];
-    $contacts[$update_id]['fonctions'] = $_POST['fonction'];
-    $contacts[$update_id]['numInterne'] = $_POST['num_interne'];
-    $contacts[$update_id]['numMobile'] = $_POST['num_mobile'];
-    $contacts[$update_id]['numFixe'] = $_POST['num_fixe'];
+    $contacts[$update_id]['service'] = encryptData($_POST['service']);
+    $contacts[$update_id]['fonctions'] = encryptData($_POST['fonction']);
+    $contacts[$update_id]['numInterne'] = encryptData($_POST['num_interne']);
+    $contacts[$update_id]['numMobile'] = encryptData($_POST['num_mobile']);
+    $contacts[$update_id]['numFixe'] = encryptData($_POST['num_fixe']);
 
     file_put_contents($json_path, json_encode($contacts, JSON_PRETTY_PRINT));
 
@@ -233,7 +233,7 @@ if (file_exists($json_path)){
   <div class="annuaire" id="annuaireList">
       <?php foreach ($contacts as $contact): ?>
         <div class='contact'>
-          <h3><?= htmlspecialchars(decryptData($contact['nom'])) . " " . decryptData(htmlspecialchars($contact['prenom'])) ?></h3>
+          <h3><?= htmlspecialchars(decryptData($contact['nom'] ?? '')) . " " . decryptData(htmlspecialchars($contact['prenom'] ?? '')) ?></h3>
           <div class='contact-infos'>
             <form action="" method="post" class="form-update">
               <input type="hidden" name="update_id" value="<?= $contact['id'] ?>">

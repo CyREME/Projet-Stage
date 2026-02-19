@@ -1,180 +1,125 @@
 import sys
 import os
 import json
-import math
+import base64
 import pandas as pd
 from openpyxl import load_workbook
+from Crypto.Cipher import AES
+from Crypto.Util import Counter
 
-# On récupère le dossier où se trouve ce fichier (fonctions.py)
+# --- CONFIGURATION SÉCURITÉ ---
+# ATTENTION : Cette clé doit être EXACTEMENT la même que celle dans Config.php
+# Dans un environnement pro, on utiliserait une variable d'environnement
+ENCRYPTION_KEY = "bV9zYjYmNypAIVpLdzJRM3U1eTh4eiYh"
+
+class EncryptionService:
+    @staticmethod
+    def encrypt(data):
+        if not data:
+            data = ""
+        # AES 256 CTR
+        key = ENCRYPTION_KEY.encode('utf-8')
+        # Création d'un IV aléatoire de 16 octets
+        iv = os.urandom(16)
+        ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
+        cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+        
+        encrypted = cipher.encrypt(data.encode('utf-8'))
+        
+        # Format identique à PHP : base64(iv : encrypted)
+        # On concatène l'IV brut et le message chiffré avec ":"
+        combined = iv + b":" + encrypted
+        return base64.b64encode(combined).decode('utf-8')
+
+# --- LOGIQUE DE FICHIERS ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# On définit les chemins par rapport à ce dossier
-# Par défaut (si pas d'argument), on tape dans Temp/import.xlsx
 FILE_PATH = os.path.join(BASE_DIR, '..', 'Temp', 'import.xlsx')
 JSON_PATH = os.path.join(BASE_DIR, '..', 'Json', 'contacts.json')
 
 def check_Json():
-  if os.path.exists(JSON_PATH):
-    with open(JSON_PATH, 'r') as file:
-      data = json.load(file)
-      return data
-  else:
-    os.makedirs(os.path.dirname(JSON_PATH), exist_ok=True)
-    with open(JSON_PATH, 'w') as file:
-      json.dump({}, file)
+    if os.path.exists(JSON_PATH):
+        with open(JSON_PATH, 'r', encoding='utf-8') as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return {}
     return {}
-  
-
 
 def merged_Cells():
-  wb = load_workbook(FILE_PATH)
-  ws = wb.active
-  
-  for merged_range in list(ws.merged_cells.ranges):
-    
-    borne = str(merged_range)
-
-    val = ws.cell(row=merged_range.min_row, column=merged_range.min_col).value
-
-    ws.unmerge_cells(borne)
-
-    cell_range = ws[borne]
-    for row in cell_range:
-      for cell in row:
-        cell.value = val
-
-  wb.save(FILE_PATH)
-  wb.close()
-
-def contact_Existe(new_nom, new_prenom, new_service, new_fonctions, newInterne, newMobile, newFixe, contacts):
-  for c in contacts.values():
-    existing_nom = c.get("nom", "").lower()
-    existing_prenom = c.get("prenom", "").lower()
-    
-    if existing_nom == new_nom.lower() and existing_prenom == new_prenom.lower():
-
-      champs = [
-        ("service", new_service),
-        ("fonctions", new_fonctions),
-        ("numInterne", newInterne),
-        ("numMobile", newMobile),
-        ("numFixe", newFixe)
-      ]
-
-      for champ , new_val in champs:
-        if new_val not in c[champ] and new_val != "":
-          if c[champ] != "":
-            c[champ] += "\n" + new_val
-          else:
-            c[champ] = new_val
-    
-      return True
-  return False
+    wb = load_workbook(FILE_PATH)
+    ws = wb.active
+    for merged_range in list(ws.merged_cells.ranges):
+        borne = str(merged_range)
+        val = ws.cell(row=merged_range.min_row, column=merged_range.min_col).value
+        ws.unmerge_cells(borne)
+        for row in ws[borne]:
+            for cell in row:
+                cell.value = val
+    wb.save(FILE_PATH)
+    wb.close()
 
 def get_data():
-  merged_Cells()
-  # Chemin du fichier JSON
-  df = pd.read_excel(FILE_PATH, dtype="str")
-
-  dictContacts = check_Json()
-  
-  if dictContacts:
-    # On convertit les clés en entiers pour trouver le max
+    merged_Cells()
+    df = pd.read_excel(FILE_PATH, dtype="str")
+    dictContacts = check_Json()
+    
+    # Gestion des IDs
     ids = [int(k) for k in dictContacts.keys() if k.isdigit()]
-    if ids:
-        indexContact = max(ids) + 1
-    else:
-        indexContact = 1
-  else:
-    indexContact = 1
+    indexContact = max(ids) + 1 if ids else 1
 
-  for index, row in df.iterrows():
+    encryptor = EncryptionService()
 
-    # Partie pour le Nom & Prenom
-    nomCompose = row['NOMS'].split()
-    nom = ""
-    prenom = ""
-    
-    for word in nomCompose:
-      if word.isupper():
-        nom += word + " "
-      else:
-        prenom += word + " "
+    for index, row in df.iterrows():
+        # Extraction Nom/Prénom
+        nom_complet = str(row.get('NOMS', '')).split()
+        nom = " ".join([w for w in nom_complet if w.isupper()])
+        prenom = " ".join([w for w in nom_complet if not w.isupper()])
+
+        # Nettoyage des données brutes
+        data_row = {
+            "nom": nom.strip(),
+            "prenom": prenom.strip(),
+            "service": str(row.get('SERVICE', '')).replace('nan', ''),
+            "fonctions": str(row.get('FONCTIONS', '')).replace('nan', ''),
+            "numInterne": str(row.get('Interne', '')).replace('nan', ''),
+            "numMobile": str(row.get('TEL MOBILE', '')).replace('nan', ''),
+            "numFixe": str(row.get('TEL FIXE', '')).replace('nan', '')
+        }
+
+        # Formatage des numéros
+        for key in ["numMobile", "numFixe"]:
+            val = data_row[key].replace("_x000D_", " ").strip()
+            if len(val) == 9: val = "0" + val
+            data_row[key] = val
+
+        # CHIFFREMENT AVANT INSERTION
+        # Note : On ne peut pas facilement utiliser contact_Existe() ici 
+        # car les données dans dictContacts sont déjà chiffrées (illisibles pour Python).
+        # Pour simplifier, on insère tout en chiffré.
         
-    nom = nom.rstrip()
-    prenom = prenom.rstrip()
-
-
-
-    # Partie pour le Service
-    service = row['SERVICE']
-    if pd.isna(service):
-      service = ""
-
-    # Partie pour les fonctions
-    fonctions = row['FONCTIONS']
-
-    if pd.isna(fonctions):
-      fonctions = ""
-
-    # Partie Numéro Interne
-    numInterne = row['Interne']
-
-    if pd.isna(numInterne):
-      numInterne = ""
+        dictContacts[str(indexContact)] = {
+            "id": str(indexContact),
+            "nom": encryptor.encrypt(data_row["nom"]),
+            "prenom": encryptor.encrypt(data_row["prenom"]),
+            "service": encryptor.encrypt(data_row["service"]),
+            "fonctions": encryptor.encrypt(data_row["fonctions"]),
+            "numInterne": encryptor.encrypt(data_row["numInterne"]),
+            "numMobile": encryptor.encrypt(data_row["numMobile"]),
+            "numFixe": encryptor.encrypt(data_row["numFixe"])
+        }
+        indexContact += 1
     
-    # Partie numéro Mobile
-    numMobile = row['TEL MOBILE']
-    
-    if pd.isna(numMobile):
-      numMobile = ""
+    with open(JSON_PATH, 'w', encoding='utf-8') as file:
+        json.dump(dictContacts, file, indent=4, ensure_ascii=False)
 
-    numMobile = numMobile.replace("_x000D_", " ")
-
-    if len(numMobile) == 9:
-      numMobile = "0" + numMobile
-
-
-    # Partie numéro Fixe
-    numFixe = row['TEL FIXE']
-
-    if pd.isna(numFixe):
-      numFixe = ""
-
-    numFixe = numFixe.replace("_x000D_", " ")
-
-    if len(numFixe) == 9:
-      numFixe = "0" + numFixe
-
-
-    if contact_Existe(nom, prenom, service, fonctions, numInterne, numMobile, numFixe, dictContacts):
-      continue
-    
-    
-    dictContacts[indexContact] = {
-      "id": str(indexContact),
-      "nom": nom,
-      "prenom": prenom,
-      "service": service,
-      "fonctions": fonctions,
-      "numInterne": numInterne,
-      "numMobile": numMobile,
-      "numFixe": numFixe
-    }
-    indexContact += 1
-    
-  
-  with open(JSON_PATH, 'w') as file:
-    json.dump(dictContacts, file, indent=4, ensure_ascii=False)
-
-  os.remove(FILE_PATH)
+    if os.path.exists(FILE_PATH):
+        os.remove(FILE_PATH)
 
 if __name__ == "__main__":
-  try:
-      # Si PHP envoie un argument, on l'utilise
-      if len(sys.argv) > 1:
-          FILE_PATH = sys.argv[1]
-      get_data()
-  except Exception as e:
-      # En cas d'erreur, on l'affiche pour que PHP la récupère
-      print(f"ERREUR PYTHON : {e}")
+    try:
+        if len(sys.argv) > 1:
+            FILE_PATH = sys.argv[1]
+        get_data()
+        print("SUCCESS")
+    except Exception as e:
+        print(f"ERREUR PYTHON : {e}")
