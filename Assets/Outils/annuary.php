@@ -68,14 +68,14 @@ if (isset($_POST['create_contact'])) {
       }
 
       $newContact = [
-        "id" => (string)$new_id,
-        "nom" => $nom,
-        "prenom" => $prenom,
-        "service" => $_POST['new_service'] ?? "",
-        "fonctions" => $_POST['new_fonction'] ?? "",
-        "numInterne" => $_POST['new_num_interne'] ?? "",
-        "numMobile" => $_POST['new_num_mobile'] ?? "",
-        "numFixe" => $_POST['new_num_fixe'] ?? ""
+        "id"         => (string)$new_id,
+        "nom"        =>  encryptData($nom),
+        "prenom"     =>  encryptData($prenom),
+        "service"    =>  encryptData($_POST['new_service'] ?? ""),
+        "fonctions"  =>  encryptData($_POST['new_fonction'] ?? ""),
+        "numInterne" =>  encryptData($_POST['new_num_interne'] ?? ""),
+        "numMobile"  =>  encryptData($_POST['new_num_mobile'] ?? ""),
+        "numFixe"    =>  encryptData($_POST['new_num_fixe'] ?? "")
       ];
 
       $contacts[$new_id] = $newContact;
@@ -233,30 +233,30 @@ if (file_exists($json_path)){
   <div class="annuaire" id="annuaireList">
       <?php foreach ($contacts as $contact): ?>
         <div class='contact'>
-          <h3><?= htmlspecialchars($contact['nom']) . " " . htmlspecialchars($contact['prenom']) ?></h3>
+          <h3><?= htmlspecialchars(decryptData($contact['nom'])) . " " . decryptData(htmlspecialchars($contact['prenom'])) ?></h3>
           <div class='contact-infos'>
             <form action="" method="post" class="form-update">
               <input type="hidden" name="update_id" value="<?= $contact['id'] ?>">
               <div class='contact-infos-group'>
                 <div class='contact-info-details'>
                   <label>Service :</label>
-                  <textarea name="service" rows="1"><?= htmlspecialchars($contact['service']) ?></textarea>
+                  <textarea name="service" rows="1"><?= decryptData(htmlspecialchars($contact['service'])) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Fonction :</label>
-                  <textarea name="fonction" rows="1"><?= htmlspecialchars($contact['fonctions']) ?></textarea>
+                  <textarea name="fonction" rows="1"><?= decryptData(htmlspecialchars($contact['fonctions'])) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Interne :</label>
-                  <textarea name="num_interne" class="num-interne" rows="1"><?= htmlspecialchars($contact['numInterne']) ?></textarea>
+                  <textarea name="num_interne" class="num-interne" rows="1"><?= decryptData(htmlspecialchars($contact['numInterne'])) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Mobile :</label>
-                  <textarea name="num_mobile" class="num-tel" rows="1"><?= htmlspecialchars($contact['numMobile']) ?></textarea>
+                  <textarea name="num_mobile" class="num-tel" rows="1"><?= decryptData(htmlspecialchars($contact['numMobile'])) ?></textarea>
                 </div>
                 <div class='contact-info-details'>
                   <label>Fixe :</label>
-                  <textarea name="num_fixe" class="num-tel" rows="1"><?= htmlspecialchars($contact['numFixe']) ?></textarea>
+                  <textarea name="num_fixe" class="num-tel" rows="1"><?= decryptData(htmlspecialchars($contact['numFixe'])) ?></textarea>
                 </div>
               </div>
 
@@ -267,8 +267,8 @@ if (file_exists($json_path)){
                       Supprimer
                   </button>
               </div>
-            </form> 
-           </div>
+            </form>
+          </div>
         </div>
       <?php endforeach; ?>
   </div>
