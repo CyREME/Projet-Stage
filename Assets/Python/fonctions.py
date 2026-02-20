@@ -8,32 +8,33 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
 # --- CONFIGURATION SÉCURITÉ ---
-# ATTENTION : Cette clé doit être EXACTEMENT la même que celle dans Config.php
-# Dans un environnement pro, on utiliserait une variable d'environnement
 ENCRYPTION_KEY = "bV9zYjYmNypAIVpLdzJRM3U1eTh4eiYh"
 
 class EncryptionService:
     @staticmethod
     def encrypt(data):
-        if not data:
-            data = ""
-        # AES 256 CTR
+        if not data: data = ""
         key = ENCRYPTION_KEY.encode('utf-8')
-        # Création d'un IV aléatoire de 16 octets
         iv = os.urandom(16)
-
-        # Initialisation du compteur pour le mode CTR
         ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
         cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
-
-        # Chiffrement des données
         encrypted = cipher.encrypt(data.encode('utf-8'))
-
-        # On concatène IV + données chiffrées (SANS le ":")
         combined = iv + encrypted
-
-        # CETTE LIGNE DOIT ÊTRE ALIGNÉE AVEC "combined" AU-DESSUS (4 ou 8 espaces)
         return base64.b64encode(combined).decode('utf-8')
+
+    @staticmethod
+    def decrypt(encrypted_data):
+        if not encrypted_data: return ""
+        try:
+            raw_data = base64.b64decode(encrypted_data)
+            iv = raw_data[:16]
+            payload = raw_data[16:]
+            key = ENCRYPTION_KEY.encode('utf-8')
+            ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
+            cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+            return cipher.decrypt(payload).decode('utf-8')
+        except:
+            return ""
 
 # --- LOGIQUE DE FICHIERS ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +49,16 @@ def check_Json():
             except json.JSONDecodeError:
                 return {}
     return {}
+
+def contact_existe_deja(nom_neuf, prenom_neuf, dict_contacts, encryptor):
+    for c in dict_contacts.values():
+        # Déchiffrement des données du JSON pour la comparaison
+        nom_existant = encryptor.decrypt(c.get("nom", ""))
+        prenom_existant = encryptor.decrypt(c.get("prenom", ""))
+
+        if nom_existant.upper() == nom_neuf.upper() and prenom_existant.lower() == prenom_neuf.lower():
+            return True
+    return False
 
 def merged_Cells():
     wb = load_workbook(FILE_PATH)
@@ -66,41 +77,41 @@ def get_data():
     merged_Cells()
     df = pd.read_excel(FILE_PATH, dtype="str")
     dictContacts = check_Json()
-    
-    # Gestion des IDs
+
+    # Trouver le prochain ID disponible
     ids = [int(k) for k in dictContacts.keys() if k.isdigit()]
     indexContact = max(ids) + 1 if ids else 1
 
     encryptor = EncryptionService()
 
     for index, row in df.iterrows():
-        # Extraction Nom/Prénom
+        # 1. Extraction et nettoyage Nom/Prénom
         nom_complet = str(row.get('NOMS', '')).split()
-        nom = " ".join([w for w in nom_complet if w.isupper()])
-        prenom = " ".join([w for w in nom_complet if not w.isupper()])
+        nom_brut = " ".join([w for w in nom_complet if w.isupper()]).strip()
+        prenom_brut = " ".join([w for w in nom_complet if not w.isupper()]).strip()
 
-        # Nettoyage des données brutes
+        # 2. VÉRIFICATION DES DOUBLONS (Compare le clair du Excel avec le déchiffré du JSON)
+        if contact_existe_deja(nom_brut, prenom_brut, dictContacts, encryptor):
+            continue # Si existe, on passe à la ligne suivante
+
+        # 3. Préparation des autres données
         data_row = {
-            "nom": nom.strip(),
-            "prenom": prenom.strip(),
-            "service": str(row.get('SERVICE', '')).replace('nan', ''),
-            "fonctions": str(row.get('FONCTIONS', '')).replace('nan', ''),
-            "numInterne": str(row.get('Interne', '')).replace('nan', ''),
-            "numMobile": str(row.get('TEL MOBILE', '')).replace('nan', ''),
-            "numFixe": str(row.get('TEL FIXE', '')).replace('nan', '')
+            "nom": nom_brut,
+            "prenom": prenom_brut,
+            "service": str(row.get('SERVICE', '')).replace('nan', '').strip(),
+            "fonctions": str(row.get('FONCTIONS', '')).replace('nan', '').strip(),
+            "numInterne": str(row.get('Interne', '')).replace('nan', '').strip(),
+            "numMobile": str(row.get('TEL MOBILE', '')).replace('nan', '').strip(),
+            "numFixe": str(row.get('TEL FIXE', '')).replace('nan', '').strip()
         }
 
         # Formatage des numéros
         for key in ["numMobile", "numFixe"]:
-            val = data_row[key].replace("_x000D_", " ").strip()
+            val = data_row[key].replace("_x000D_", " ")
             if len(val) == 9: val = "0" + val
             data_row[key] = val
 
-        # CHIFFREMENT AVANT INSERTION
-        # Note : On ne peut pas facilement utiliser contact_Existe() ici 
-        # car les données dans dictContacts sont déjà chiffrées (illisibles pour Python).
-        # Pour simplifier, on insère tout en chiffré.
-        
+        # 4. CHIFFREMENT ET AJOUT
         dictContacts[str(indexContact)] = {
             "id": str(indexContact),
             "nom": encryptor.encrypt(data_row["nom"]),
@@ -112,7 +123,8 @@ def get_data():
             "numFixe": encryptor.encrypt(data_row["numFixe"])
         }
         indexContact += 1
-    
+
+    # 5. Sauvegarde
     with open(JSON_PATH, 'w', encoding='utf-8') as file:
         json.dump(dictContacts, file, indent=4, ensure_ascii=False)
 
