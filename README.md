@@ -1,42 +1,54 @@
-# Nexus - Portail d'Outils Internes & Annuaire Dynamique
+# 🚀 Nexus - Portails d'Outils & Annuaire Sécurisé
 
-Nexus est une plateforme web modulaire développée dans le cadre d'un stage de 2ème année de BTS SIO (SLAM). Elle regroupe plusieurs outils utilitaires destinés à faciliter la gestion quotidienne des données et à renforcer la cybersécurité au sein de l'organisation.
+Nexus est une plateforme web développée dans le cadre de mon **BTS SIO (Services Informatiques aux Organisations)**. Elle regroupe des outils utilitaires pour les administrateurs et un annuaire d'entreprise centralisé avec une gestion avancée de la sécurité des données.
 
-## 🚀 Fonctionnalités Principales
+## 🌟 Points Forts du Projet
 
-### 1. Annuaire d'Entreprise Intelligent
-* **Affichage dynamique** : Liste des contacts sous forme de cartes interactives.
-* **Recherche temps réel** : Filtrage instantané des contacts via JavaScript.
-* **Importation Excel (ETL)** : Module d'importation utilisant un moteur Python pour transformer des fichiers Excel complexes en données exploitables.
-* **Fusion intelligente** : Gestion automatique des doublons (fusion des services et fonctions pour un même contact).
-* **Gestion des cellules fusionnées** : Algorithme capable de traiter les fichiers Excel mal formatés.
-
-### 2. Password Generator
-* Génération de mots de passe robustes conformes aux recommandations de l'ANSSI.
-* Paramétrage personnalisé (longueur, caractères spéciaux, chiffres).
-* Fonction "Copier en un clic".
-
-### 3. Password Checker
-* Analyse de l'entropie et de la robustesse des mots de passe saisis.
-* Indicateur visuel de force (code couleur dynamique).
-* Estimation pédagogique du temps nécessaire pour un craquage par force brute.
+- **Sécurité "Safe by Design"** : Chiffrement intégral des données sensibles (RGPD compliant).
+- **Interopérabilité** : Communication fluide entre PHP (Backend) et Python (Traitement de données).
+- **Automatisation CI/CD** : Déploiement automatique via GitHub Actions sur serveur Infomaniak.
 
 ## 🛠️ Stack Technique
 
-* **Frontend** : HTML5, CSS3 (Flexbox/Grid), JavaScript (ES6+).
-* **Backend** : PHP 8.x.
-* **Traitement de Données** : Python 3.x avec la bibliothèque **Pandas** et **Openpyxl**.
-* **Stockage** : NoSQL via fichiers structurés JSON.
+- **Frontend** : HTML5, CSS3 (Variables modernes, Flexbox), JavaScript.
+- **Backend PHP** : Gestion de la logique serveur et du routage.
+- **Python** : Scripting pour le traitement automatisé des fichiers Excel (Pandas, OpenPyxl).
+- **Base de données** : Stockage JSON sécurisé.
+- **Déploiement** : Node.js, GitHub Actions, SSH.
 
-## 📂 Architecture du Projet
+## 🔐 Focus Sécurité : Chiffrement AES-256
 
-Le projet est conçu de manière modulaire :
-```text
-├── index.php                # Point d'entrée principal
-├── Assets/
-│   ├── Outils/             # Modules PHP indépendants (Annuaire, Psw...)
-│   ├── Interface-modules/  # Composants UI (NavBar dynamique)
-│   ├── Python/             # Scripts de traitement de données
-│   ├── Fonction/           # Scripts PHP utilitaires
-│   ├── Json/               # Persistance des données (contacts.json)
-│   └── css/js/             # Ressources statiques
+La fonctionnalité phare de ce projet est la sécurisation de l'annuaire. Contrairement à un stockage classique, Nexus utilise un algorithme de chiffrement symétrique :
+
+- **Algorithme** : AES-256-CTR.
+- **Vecteur d'Initialisation (IV)** : Chaque entrée possède un IV unique, garantissant que deux noms identiques ne produisent pas le même résultat chiffré (protection contre l'analyse de motifs).
+- **Interopérabilité PHP/Python** : Une classe de chiffrement personnalisée a été développée dans les deux langages pour garantir que les données importées par Python soient lisibles par PHP et inversement.
+
+## 📂 Structure du Projet
+
+- `/Assets/Fonction` : Logique de chiffrement et configuration.
+- `/Assets/Outils` : Modules de l'application (Annuaire, Password Checker, etc.).
+- `/Assets/Python` : Scripts de traitement de données Excel.
+- `/Assets/Json` : Stockage des données (protégé par `.htaccess`).
+
+## 🚀 Installation & Déploiement
+
+1.  **Clonage du dépôt** :
+    ```bash
+    git clone [https://github.com/ton-pseudo/projet-stage.git](https://github.com/ton-pseudo/projet-stage.git)
+    ```
+
+2.  **Configuration** :
+    * Créer un fichier `Assets/Fonction/Config.php` avec une clé `ENCRYPTION_KEY` de 32 caractères.
+    * S'assurer que Python dispose des dépendances : 
+        ```bash
+        pip install pandas openpyxl pycryptodome
+        ```
+
+3.  **Déploiement** :
+    * Le projet est configuré pour se déployer automatiquement via **GitHub Actions** sur un hébergement **Infomaniak** à chaque `push` sur la branche `main`.
+
+## 👨‍💻 Auteur
+
+**Emeric Cellier** - Candidat au BTS Services Informatiques aux Organisations.  
+Session 2026.
