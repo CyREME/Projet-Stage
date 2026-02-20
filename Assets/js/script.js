@@ -597,4 +597,56 @@ function initAnnuaire() {
         showNotification(notifMessage.textContent);
     }
 
+
+    // Filtre pour Noms, Prénoms, Fonctions, Services (Lettres, espaces, tirets uniquement)
+    const filterTextOnly = (val) => val.replace(/[^a-zA-ZÀ-ÿ\s-]/g, '');
+
+    // Filtre pour Téléphones et Numéros internes (Chiffres uniquement)
+    const filterNumbersOnly = (val) => val.replace(/\D/g, '');
+
+
+    // Dans initAnnuaire(), remplacez les anciens écouteurs par ceux-ci :
+    if(modalNom) {
+        modalNom.addEventListener('input', function() {
+            this.value = filterTextOnly(this.value).toUpperCase();
+        });
+    }
+
+    if(modalPrenom) {
+        modalPrenom.addEventListener('input', function() {
+            // Supprime les caractères spéciaux, puis applique la mise en majuscule de la première lettre
+            let cleanVal = filterTextOnly(this.value);
+            this.value = cleanVal.replace(/(?:^|[\s-])\w/g, match => match.toUpperCase());
+        });
+    }
+
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+
+        // Champs Texte (Service, Fonction)
+        if (target.name === 'service' || target.name === 'fonction' || 
+            target.name === 'new_service' || target.name === 'new_fonction') {
+            target.value = filterTextOnly(target.value);
+        }
+
+        // Champs Numériques (Interne, Mobile, Fixe)
+        if (target.classList.contains('num-interne') || target.classList.contains('num-tel') ||
+            target.name.includes('num_mobile') || target.name.includes('num_fixe')) {
+            target.value = filterNumbersOnly(target.value);
+        }
+
+        // Constante des tailles pour les numéros
+        const numInterneSize = 4;
+        const numMobileAndFixeSize = 10;
+
+        // Vérification de la taille des numéros pour empêcher l'utilisateur de dépasser la taille maximale
+        if (target.name.includes('num_interne') && target.value.length > numInterneSize) {
+            target.value = target.value.slice(0, numInterneSize);
+        }
+
+        if ((target.name.includes('num_fixe') || target.name.includes('num_fixe')) && target.value.length > numMobileAndFixeSize) {
+            target.value = target.value.slice(0, numMobileAndFixeSize);
+        }
+    });
+
 }
