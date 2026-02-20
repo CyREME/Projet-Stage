@@ -21,14 +21,18 @@ class EncryptionService:
         key = ENCRYPTION_KEY.encode('utf-8')
         # Création d'un IV aléatoire de 16 octets
         iv = os.urandom(16)
+
+        # Initialisation du compteur pour le mode CTR
         ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
         cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
-        
+
+        # Chiffrement des données
         encrypted = cipher.encrypt(data.encode('utf-8'))
-        
-        # Format identique à PHP : base64(iv : encrypted)
-        # On concatène l'IV brut et le message chiffré avec ":"
-        combined = iv + b":" + encrypted
+
+        # On concatène IV + données chiffrées (SANS le ":")
+        combined = iv + encrypted
+
+        # CETTE LIGNE DOIT ÊTRE ALIGNÉE AVEC "combined" AU-DESSUS (4 ou 8 espaces)
         return base64.b64encode(combined).decode('utf-8')
 
 # --- LOGIQUE DE FICHIERS ---

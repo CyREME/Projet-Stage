@@ -11,6 +11,7 @@
         pkgs.python3Packages.pip
         pkgs.python3Packages.pandas
         pkgs.python3Packages.openpyxl
-        pkgs.python310Packages.psycopg2
+        pkgs.python3Packages.psycopg2
+        pkgs.python3Packages.pycryptodome
     ];
 }

@@ -158,29 +158,29 @@ if (isset($_POST['update_id'])) {
 // --- IMPORT ---
 if (isset($_POST['import'])) {
 
-  #echo "Fichier importé avec succès.";
-  
   $templacement_temporaire = $_FILES['csv_file']['tmp_name'];
-
   $dossier_temp = __DIR__ . '/../Temp/';
   $destination = $dossier_temp . 'import.xlsx';
 
   if (!is_dir($dossier_temp)) {
     mkdir($dossier_temp, 0777, true);
   }
-    
+
   if (move_uploaded_file($templacement_temporaire, $destination)) {
-    $script_path = __DIR__ . '/../Python/fonctions.py';
-    $commande = "python3 " . escapeshellarg($script_path) . " " . escapeshellarg($destination) . " 2>&1";
-    $output = shell_exec($commande);
+      // Chemin absolu vers le script
+      $script_path = __DIR__ . '/../Python/fonctions.py';
 
-    $output = shell_exec($commande);
-    // Pour le debug python : var_dump($output); die();
+      // On lance la commande
+      $commande = "python3 " . escapeshellarg($script_path) . " " . escapeshellarg($destination) . " 2>&1";
+      $output = shell_exec($commande);
 
-    redirectWithSuccess("Fichier importé avec succès.", "success");
-
-} else {
-    redirectWithSuccess("Erreur lors de l'importation du fichier.", "erreur");
+      // Vérification du succès
+      if (strpos($output, 'SUCCESS') !== false) {
+          redirectWithSuccess("Fichier importé avec succès.", "success");
+      } else {
+          // En cas d'erreur, on affiche le message de Python
+          redirectWithSuccess("Erreur Python : " . $output, "erreur");
+      }
   }
 }
 
@@ -233,7 +233,7 @@ if (file_exists($json_path)){
   <div class="annuaire" id="annuaireList">
       <?php foreach ($contacts as $contact): ?>
         <div class='contact'>
-          <h3><?= htmlspecialchars(decryptData($contact['nom'] ?? '')) . " " . decryptData(htmlspecialchars($contact['prenom'] ?? '')) ?></h3>
+          <h3><?= htmlspecialchars(decryptData($contact['nom'] ?? '')) . " " . htmlspecialchars(decryptData($contact['prenom'] ?? '')) ?></h3>
           <div class='contact-infos'>
             <form action="" method="post" class="form-update">
               <input type="hidden" name="update_id" value="<?= $contact['id'] ?>">
